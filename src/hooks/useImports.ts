@@ -38,7 +38,7 @@ export const useImports = () => {
   const [imports, setImports] = useState<ImportDatabaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
   
   // Map database status string to ShipmentStatus enum
@@ -125,7 +125,7 @@ export const useImports = () => {
       
     // For filtering, convert the database status to our component status type
     const shipmentStatus = mapStatusToShipmentStatus(imp.status);
-    const matchesStatus = statusFilter ? shipmentStatus === statusFilter : true;
+    const matchesStatus = statusFilter === 'all' ? true : shipmentStatus === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
