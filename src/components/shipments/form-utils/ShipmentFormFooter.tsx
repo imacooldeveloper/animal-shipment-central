@@ -1,21 +1,44 @@
 
 import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface ShipmentFormFooterProps {
   onCancel: () => void;
   buttonLabel: string;
-  buttonColor?: string;
+  buttonColor: string;
+  isSubmitting?: boolean;
 }
 
-const ShipmentFormFooter = ({ 
-  onCancel, 
-  buttonLabel, 
-  buttonColor = "bg-blue-600 hover:bg-blue-700"
+const ShipmentFormFooter = ({
+  onCancel,
+  buttonLabel,
+  buttonColor,
+  isSubmitting = false
 }: ShipmentFormFooterProps) => {
   return (
-    <div className="flex items-center justify-end space-x-4">
-      <Button variant="outline" onClick={onCancel}>Cancel</Button>
-      <Button type="submit" className={buttonColor}>{buttonLabel}</Button>
+    <div className="flex justify-end space-x-2 pt-4">
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isSubmitting}
+      >
+        Cancel
+      </Button>
+      <Button
+        type="submit"
+        className={buttonColor}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Saving...
+          </>
+        ) : (
+          buttonLabel
+        )}
+      </Button>
     </div>
   );
 };

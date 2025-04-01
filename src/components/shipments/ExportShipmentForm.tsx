@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -60,9 +59,10 @@ const exportFormSchema = z.object({
 interface ExportShipmentFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => {
+const ExportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: ExportShipmentFormProps) => {
   const form = useForm<z.infer<typeof exportFormSchema>>({
     resolver: zodResolver(exportFormSchema),
     defaultValues: {
@@ -83,13 +83,11 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
   }, [statusValue]);
 
   const handleFormSubmit = (values: z.infer<typeof exportFormSchema>) => {
-    // Combine courier with courierOther if "Other" is selected
     let finalCourier = values.courier;
     if (values.courier === "Other" && values.courierOther) {
       finalCourier = values.courierOther;
     }
     
-    // Combine status with statusOther if "Other" is selected
     let finalStatus = values.status;
     if (values.status === "Other" && values.statusOther) {
       finalStatus = values.statusOther;
@@ -445,6 +443,7 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
           onCancel={onCancel} 
           buttonLabel="Create Export" 
           buttonColor="bg-blue-600 hover:bg-blue-700"
+          isSubmitting={isSubmitting}
         />
       </form>
     </Form>

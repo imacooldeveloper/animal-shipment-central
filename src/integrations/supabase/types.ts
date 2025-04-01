@@ -33,6 +33,147 @@ export type Database = {
         }
         Relationships: []
       }
+      exports: {
+        Row: {
+          animal_type: string
+          courier: string | null
+          courier_account_number: string | null
+          created_at: string | null
+          created_by: string | null
+          departure_date: string | null
+          destination_lab: string
+          export_number: string
+          id: string
+          is_international: boolean | null
+          lab_contact_email: string | null
+          lab_contact_name: string | null
+          notes: string | null
+          protocol_number: string | null
+          quantity: string
+          sending_lab: string
+          status: string | null
+          tracking_number: string | null
+        }
+        Insert: {
+          animal_type: string
+          courier?: string | null
+          courier_account_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          departure_date?: string | null
+          destination_lab: string
+          export_number: string
+          id?: string
+          is_international?: boolean | null
+          lab_contact_email?: string | null
+          lab_contact_name?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          quantity: string
+          sending_lab: string
+          status?: string | null
+          tracking_number?: string | null
+        }
+        Update: {
+          animal_type?: string
+          courier?: string | null
+          courier_account_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          departure_date?: string | null
+          destination_lab?: string
+          export_number?: string
+          id?: string
+          is_international?: boolean | null
+          lab_contact_email?: string | null
+          lab_contact_name?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          quantity?: string
+          sending_lab?: string
+          status?: string | null
+          tracking_number?: string | null
+        }
+        Relationships: []
+      }
+      imports: {
+        Row: {
+          animal_type: string
+          arrival_date: string | null
+          courier: string | null
+          courier_account_number: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          import_number: string
+          lab_contact_email: string | null
+          lab_contact_name: string | null
+          notes: string | null
+          protocol_number: string | null
+          quantity: string
+          sending_lab: string
+          status: string | null
+        }
+        Insert: {
+          animal_type: string
+          arrival_date?: string | null
+          courier?: string | null
+          courier_account_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          import_number: string
+          lab_contact_email?: string | null
+          lab_contact_name?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          quantity: string
+          sending_lab: string
+          status?: string | null
+        }
+        Update: {
+          animal_type?: string
+          arrival_date?: string | null
+          courier?: string | null
+          courier_account_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          import_number?: string
+          lab_contact_email?: string | null
+          lab_contact_name?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          quantity?: string
+          sending_lab?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
+      message_templates: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          subject: string
+          template_type: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          subject: string
+          template_type: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          subject?: string
+          template_type?: string
+        }
+        Relationships: []
+      }
       usage_stats: {
         Row: {
           created_at: string | null
