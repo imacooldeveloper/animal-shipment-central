@@ -38,7 +38,7 @@ const ImportCards = ({ imports }: ImportCardsProps) => {
         <Card key={imp.id} className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <Link to={`/shipments/${imp.id}`}>
+              <Link to={`/imports/${imp.id}`}>
                 <CardTitle className="text-primary hover:underline text-lg">
                   {imp.id}
                 </CardTitle>

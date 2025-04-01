@@ -14,6 +14,7 @@ import FormDetail from "./pages/FormDetail";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Imports from "./pages/Imports";
+import ImportDetail from "./pages/ImportDetail";
 import Exports from "./pages/Exports";
 import Shipments from "./pages/Shipments";
 import NewShipment from "./pages/NewShipment";
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="shipments" element={<Shipments />} />
             <Route path="shipments/new" element={<NewShipment />} />
             <Route path="imports" element={<Imports />} />
+            <Route path="imports/:id" element={<ImportDetail />} />
             <Route path="exports" element={<Exports />} />
             <Route path="transfer-forms" element={<TransferForms />} />
             <Route path="transfer-forms/:id" element={<FormDetail />} />

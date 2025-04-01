@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -51,22 +52,46 @@ const importFormSchema = z.object({
   statusOther: z.string().optional(),
   notes: z.string().optional(),
   labContactName: z.string().optional(),
-  labContactEmail: z.string().email("Invalid email address").optional(),
+  labContactEmail: z.string().email("Invalid email address").optional().or(z.literal('')),
 });
 
 interface ImportShipmentFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  initialData?: Partial<ImportShipment>;
+  isEditing?: boolean;
+  formId?: string;
 }
 
-const ImportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: ImportShipmentFormProps) => {
+const ImportShipmentForm = ({ 
+  onSubmit, 
+  onCancel, 
+  isSubmitting = false,
+  initialData,
+  isEditing = false,
+  formId = "import-shipment-form"
+}: ImportShipmentFormProps) => {
+  const defaultValues = {
+    importNumber: initialData?.importNumber || `IMP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+    sendingLab: initialData?.sendingLab || "",
+    protocolNumber: initialData?.protocolNumber || "",
+    courier: initialData?.courier || "",
+    courierOther: "",
+    courierAccountNumber: initialData?.courierAccountNumber || "",
+    arrivalDate: initialData?.arrivalDate,
+    animalType: initialData?.animalType || "",
+    quantity: initialData?.quantity || "",
+    status: initialData?.status || "",
+    statusOther: "",
+    notes: initialData?.notes || "",
+    labContactName: initialData?.labContactName || "",
+    labContactEmail: initialData?.labContactEmail || "",
+  };
+
   const form = useForm<z.infer<typeof importFormSchema>>({
     resolver: zodResolver(importFormSchema),
-    defaultValues: {
-      importNumber: `IMP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      notes: "",
-    },
+    defaultValues,
   });
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
@@ -100,7 +125,7 @@ const ImportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: Import
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6" id={formId}>
         <StatusWarning show={showWaitingInfo} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -111,7 +136,7 @@ const ImportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: Import
               <FormItem>
                 <FormLabel>Import Number</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="IMP-2025-001" />
+                  <Input {...field} placeholder="IMP-2025-001" disabled={isEditing} />
                 </FormControl>
                 <FormDescription>
                   Unique identifier for this import
@@ -397,18 +422,22 @@ const ImportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: Import
           )}
         />
 
-        <DocumentUpload 
-          documentFiles={documentFiles} 
-          setDocumentFiles={setDocumentFiles} 
-          description="Upload health certificates, customs documents, etc."
-        />
+        {!isEditing && (
+          <DocumentUpload 
+            documentFiles={documentFiles} 
+            setDocumentFiles={setDocumentFiles} 
+            description="Upload health certificates, customs documents, etc."
+          />
+        )}
 
-        <ShipmentFormFooter 
-          onCancel={onCancel} 
-          buttonLabel="Create Import" 
-          buttonColor="bg-emerald-600 hover:bg-emerald-700"
-          isSubmitting={isSubmitting}
-        />
+        {!formId.includes("edit") && (
+          <ShipmentFormFooter 
+            onCancel={onCancel} 
+            buttonLabel={isEditing ? "Save Changes" : "Create Import"} 
+            buttonColor="bg-emerald-600 hover:bg-emerald-700"
+            isSubmitting={isSubmitting}
+          />
+        )}
       </form>
     </Form>
   );

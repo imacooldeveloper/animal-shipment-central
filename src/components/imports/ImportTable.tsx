@@ -73,7 +73,7 @@ const ImportTable = ({ imports }: ImportTableProps) => {
             <TableRow key={imp.id}>
               <TableCell className="font-medium">
                 <Link 
-                  to={`/shipments/${imp.id}`}
+                  to={`/imports/${imp.id}`}
                   className="text-primary hover:underline"
                 >
                   {imp.id}
