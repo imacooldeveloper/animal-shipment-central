@@ -42,6 +42,7 @@ const NewShipment = () => {
         delete formattedData.documents;
         delete formattedData.type;
         
+        // Use type assertion to tell TypeScript this is valid
         response = await supabase
           .from('imports')
           .insert({
@@ -57,7 +58,7 @@ const NewShipment = () => {
             notes: formattedData.notes,
             lab_contact_name: formattedData.labContactName,
             lab_contact_email: formattedData.labContactEmail
-          });
+          } as any);
       } else {
         // Format the departure_date for Postgres
         const formattedData = {
@@ -70,6 +71,7 @@ const NewShipment = () => {
         delete formattedData.documents;
         delete formattedData.type;
         
+        // Use type assertion to tell TypeScript this is valid
         response = await supabase
           .from('exports')
           .insert({
@@ -87,7 +89,7 @@ const NewShipment = () => {
             notes: formattedData.notes,
             lab_contact_name: formattedData.labContactName,
             lab_contact_email: formattedData.labContactEmail
-          });
+          } as any);
       }
       
       if (response.error) {
