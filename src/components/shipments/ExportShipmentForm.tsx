@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, Info, X } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,12 +32,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import DocumentUpload from './form-utils/DocumentUpload';
+import StatusWarning from './form-utils/StatusWarning';
+import ShipmentFormFooter from './form-utils/ShipmentFormFooter';
+import { couriers, statuses, animalTypes } from './form-utils/constants';
+import { ExportShipment } from '@/types';
 
 const exportFormSchema = z.object({
   exportNumber: z.string().min(2, "Export number is required"),
@@ -57,37 +56,6 @@ const exportFormSchema = z.object({
   labContactName: z.string().optional(),
   labContactEmail: z.string().email("Invalid email address").optional(),
 });
-
-const couriers = [
-  "World Courier",
-  "BioTrans",
-  "Validated",
-  "MNX",
-  "Other"
-];
-
-const statuses = [
-  "Initializing Export",
-  "Waiting for Courier Response",
-  "Waiting for Vet Approval",
-  "Waiting for Lab Paperwork",
-  "Sent Health Reports",
-  "Documents Approved",
-  "Ready for Pickup",
-  "In Transit",
-  "Delivered",
-  "On Hold",
-  "Cancelled",
-  "Other"
-];
-
-const animalTypes = [
-  "Rodents",
-  "Zebrafish",
-  "Amphibians", 
-  "Birds",
-  "Reptiles",
-];
 
 interface ExportShipmentFormProps {
   onSubmit: (data: any) => void;
@@ -114,16 +82,6 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
     setShowWaitingInfo(statusValue === "Waiting for Lab Paperwork");
   }, [statusValue]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setDocumentFiles((prev) => [...prev, ...Array.from(e.target.files || [])]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setDocumentFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleFormSubmit = (values: z.infer<typeof exportFormSchema>) => {
     // Combine courier with courierOther if "Other" is selected
     let finalCourier = values.courier;
@@ -137,43 +95,19 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
       finalStatus = values.statusOther;
     }
     
-    const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (key === "courier") {
-        formData.append(key, finalCourier || "");
-      } else if (key === "status") {
-        formData.append(key, finalStatus || "");
-      } else if (value instanceof Date) {
-        formData.append(key, value.toISOString());
-      } else if (value !== undefined) {
-        formData.append(key, value);
-      }
-    });
-
-    documentFiles.forEach((file) => {
-      formData.append('documents', file);
-    });
-
     onSubmit({
       ...values,
       courier: finalCourier,
       status: finalStatus,
       documents: documentFiles,
       type: 'export'
-    });
+    } as ExportShipment);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
-        {showWaitingInfo && (
-          <div className="bg-slate-100 p-4 rounded-md border border-slate-200 flex items-start space-x-3 mb-4">
-            <Info className="text-slate-500 h-5 w-5 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-slate-600">
-              You're waiting on lab paperwork. You can leave the other fields blank for now and update this shipment later.
-            </p>
-          </div>
-        )}
+        <StatusWarning show={showWaitingInfo} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
@@ -501,46 +435,17 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
           )}
         />
 
-        <div className="space-y-4">
-          <FormLabel>Documents</FormLabel>
-          <div className="flex items-center gap-4">
-            <Input
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              className="max-w-sm"
-            />
-            <FormDescription>
-              Upload permits, labels, signed forms, etc.
-            </FormDescription>
-          </div>
+        <DocumentUpload 
+          documentFiles={documentFiles} 
+          setDocumentFiles={setDocumentFiles} 
+          description="Upload permits, labels, signed forms, etc."
+        />
 
-          {documentFiles.length > 0 && (
-            <div className="border rounded-md p-4">
-              <p className="font-medium mb-2">Attached Files:</p>
-              <ul className="space-y-2">
-                {documentFiles.map((file, index) => (
-                  <li key={index} className="flex items-center justify-between bg-muted p-2 rounded">
-                    <span className="truncate flex-1">{file.name}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => removeFile(index)}
-                      className="h-6 w-6"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center justify-end space-x-4">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Create Export</Button>
-        </div>
+        <ShipmentFormFooter 
+          onCancel={onCancel} 
+          buttonLabel="Create Export" 
+          buttonColor="bg-blue-600 hover:bg-blue-700"
+        />
       </form>
     </Form>
   );
