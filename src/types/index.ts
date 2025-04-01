@@ -8,6 +8,10 @@ export interface Shipment {
   status: ShipmentStatus;
   lastUpdated: string;
   animalType: string;
+  lab?: string; // Added for imports/exports (sending or destination lab)
+  courier?: string; // Added for tracking shipping provider
+  arrivalDate?: string; // For imports
+  departureDate?: string; // For exports
   checklist: {
     transferForms: boolean;
     healthCert: boolean;

@@ -13,6 +13,9 @@ import ShipmentDetail from "./pages/ShipmentDetail";
 import FormDetail from "./pages/FormDetail";
 import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
+import Imports from "./pages/Imports";
+import Exports from "./pages/Exports";
+import Shipments from "./pages/Shipments";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +28,9 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
+            <Route path="shipments" element={<Shipments />} />
+            <Route path="imports" element={<Imports />} />
+            <Route path="exports" element={<Exports />} />
             <Route path="transfer-forms" element={<TransferForms />} />
             <Route path="transfer-forms/:id" element={<FormDetail />} />
             <Route path="documents" element={<Documents />} />
