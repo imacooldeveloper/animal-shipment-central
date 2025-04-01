@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -25,7 +24,6 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowUpDown, 
@@ -33,12 +31,12 @@ import {
   Filter, 
   Plus, 
   Search,
-  TruckIn,
-  TruckOut
+  Truck
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
+import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
+import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
 
-// Mock shipment data for demonstration
 const mockShipments = [
   {
     id: "IMP-001",
@@ -109,7 +107,6 @@ const Shipments = () => {
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [activeTab, setActiveTab] = useState<string>("all");
   
-  // Filter shipments based on search query, status filter, and type filter
   const filteredShipments = mockShipments.filter((shipment) => {
     const matchesSearch = 
       shipment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -138,13 +135,13 @@ const Shipments = () => {
         <div className="flex gap-2">
           <Button asChild variant="outline">
             <Link to="/imports">
-              <TruckIn className="mr-2 h-4 w-4" />
+              <Truck className="mr-2 h-4 w-4" />
               All Imports
             </Link>
           </Button>
           <Button asChild variant="outline">
             <Link to="/exports">
-              <TruckOut className="mr-2 h-4 w-4" />
+              <Truck className="mr-2 h-4 w-4" />
               All Exports
             </Link>
           </Button>
@@ -277,33 +274,13 @@ const renderShipmentsList = (shipments: typeof mockShipments, viewMode: 'table' 
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={`
-                        ${shipment.type === 'import' 
-                          ? 'bg-app-green/20 text-app-green border-app-green/50' 
-                          : 'bg-app-blue/20 text-app-blue border-app-blue/50'
-                        }
-                      `}
-                    >
-                      {shipment.type === 'import' ? 'Import' : 'Export'}
-                    </Badge>
+                    <ShipmentTypeBadge type={shipment.type} />
                   </TableCell>
                   <TableCell>{shipment.lab}</TableCell>
                   <TableCell>{shipment.country}</TableCell>
                   <TableCell>{shipment.courier}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={`
-                        bg-app-status-${shipment.status}/20 
-                        text-app-status-${shipment.status} 
-                        border-app-status-${shipment.status}/50
-                      `}
-                    >
-                      {shipment.status === 'draft' ? 'Draft' : 
-                       shipment.status === 'progress' ? 'In Progress' : 'Complete'}
-                    </Badge>
+                    <ShipmentStatusBadge status={shipment.status} />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center">
@@ -341,28 +318,8 @@ const renderShipmentsList = (shipments: typeof mockShipments, viewMode: 'table' 
                     </CardTitle>
                   </Link>
                   <div className="flex gap-2">
-                    <Badge
-                      variant="outline"
-                      className={`
-                        ${shipment.type === 'import' 
-                          ? 'bg-app-green/20 text-app-green border-app-green/50' 
-                          : 'bg-app-blue/20 text-app-blue border-app-blue/50'
-                        }
-                      `}
-                    >
-                      {shipment.type === 'import' ? 'Import' : 'Export'}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className={`
-                        bg-app-status-${shipment.status}/20 
-                        text-app-status-${shipment.status} 
-                        border-app-status-${shipment.status}/50
-                      `}
-                    >
-                      {shipment.status === 'draft' ? 'Draft' : 
-                      shipment.status === 'progress' ? 'In Progress' : 'Complete'}
-                    </Badge>
+                    <ShipmentTypeBadge type={shipment.type} />
+                    <ShipmentStatusBadge status={shipment.status} />
                   </div>
                 </div>
                 <CardDescription>{shipment.lab}, {shipment.country}</CardDescription>

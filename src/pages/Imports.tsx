@@ -31,7 +31,7 @@ import {
   Calendar, 
   Filter, 
   Search,
-  TruckIn
+  Truck
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 
@@ -91,7 +91,7 @@ const Imports = () => {
         </div>
         <Button asChild>
           <Link to="/shipments/new">
-            <TruckIn className="mr-2 h-4 w-4" />
+            <Truck className="mr-2 h-4 w-4" />
             New Import
           </Link>
         </Button>
