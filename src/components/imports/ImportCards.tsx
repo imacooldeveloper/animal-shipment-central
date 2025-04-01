@@ -1,6 +1,5 @@
 
 import { Link } from 'react-router-dom';
-import { Badge } from "@/components/ui/badge";
 import { 
   Card, 
   CardContent, 
@@ -9,6 +8,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { ShipmentStatus } from '@/types';
+import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
 
 interface ImportItem {
   id: string;
@@ -43,17 +43,7 @@ const ImportCards = ({ imports }: ImportCardsProps) => {
                   {imp.id}
                 </CardTitle>
               </Link>
-              <Badge
-                variant="outline"
-                className={`
-                  bg-app-status-${imp.status}/20 
-                  text-app-status-${imp.status} 
-                  border-app-status-${imp.status}/50
-                `}
-              >
-                {imp.status === 'draft' ? 'Draft' : 
-                imp.status === 'progress' ? 'In Progress' : 'Complete'}
-              </Badge>
+              <ShipmentStatusBadge status={imp.status} />
             </div>
             <CardDescription>{imp.sendingLab}</CardDescription>
           </CardHeader>

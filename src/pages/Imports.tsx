@@ -17,19 +17,38 @@ import ImportCards from '@/components/imports/ImportCards';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface ImportItem {
+// Database item structure from Supabase
+interface ImportDatabaseItem {
   id: string;
   import_number: string;
   sending_lab: string;
-  courier: string;
-  status: ShipmentStatus;
-  arrival_date: string;
+  courier: string | null;
+  status: string | null;
+  arrival_date: string | null;
   animal_type: string;
   created_at: string;
+  // Additional fields that might be in the database
+  courier_account_number?: string | null;
+  created_by?: string | null;
+  lab_contact_email?: string | null;
+  lab_contact_name?: string | null;
+  notes?: string | null;
+  protocol_number?: string | null;
+  quantity?: string;
+}
+
+// Interface for component props (after formatting)
+interface ImportItem {
+  id: string;
+  sendingLab: string;
+  courier: string;
+  status: ShipmentStatus;
+  arrivalDate: string;
+  animalType: string;
 }
 
 const Imports = () => {
-  const [imports, setImports] = useState<ImportItem[]>([]);
+  const [imports, setImports] = useState<ImportDatabaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -61,6 +80,32 @@ const Imports = () => {
     fetchImports();
   }, []);
   
+  // Map database status string to ShipmentStatus enum
+  const mapStatusToShipmentStatus = (status: string | null): ShipmentStatus => {
+    if (!status) return 'draft';
+    
+    // Map common status values to ShipmentStatus
+    if (status.toLowerCase().includes('draft') || 
+        status.toLowerCase().includes('init') || 
+        status === 'Initializing Import') {
+      return 'draft';
+    }
+    
+    if (status.toLowerCase().includes('progress') || 
+        status.toLowerCase().includes('transit') || 
+        status.toLowerCase().includes('waiting')) {
+      return 'progress';
+    }
+    
+    if (status.toLowerCase().includes('complete') || 
+        status.toLowerCase().includes('delivered')) {
+      return 'complete';
+    }
+    
+    // Default fallback
+    return 'draft';
+  };
+  
   // Filter imports based on search query and status filter
   const filteredImports = imports.filter((imp) => {
     const matchesSearch = 
@@ -68,7 +113,9 @@ const Imports = () => {
       imp.sending_lab?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       imp.courier?.toLowerCase().includes(searchQuery.toLowerCase());
       
-    const matchesStatus = statusFilter ? imp.status === statusFilter : true;
+    // For filtering, convert the database status to our component status type
+    const shipmentStatus = mapStatusToShipmentStatus(imp.status);
+    const matchesStatus = statusFilter ? shipmentStatus === statusFilter : true;
     
     return matchesSearch && matchesStatus;
   });
@@ -76,11 +123,11 @@ const Imports = () => {
   const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
   
   // Format imports for the components
-  const formattedImports = filteredImports.map(imp => ({
+  const formattedImports: ImportItem[] = filteredImports.map(imp => ({
     id: imp.import_number,
     sendingLab: imp.sending_lab,
     courier: imp.courier || 'Not specified',
-    status: imp.status as ShipmentStatus || 'draft',
+    status: mapStatusToShipmentStatus(imp.status),
     arrivalDate: imp.arrival_date || 'Not scheduled',
     animalType: imp.animal_type
   }));

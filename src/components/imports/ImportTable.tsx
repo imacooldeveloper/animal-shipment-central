@@ -1,7 +1,6 @@
 
 import { Link } from 'react-router-dom';
 import { Calendar } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
 import { 
   Table, 
   TableBody, 
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { ShipmentStatus } from '@/types';
 import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
+import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
 
 interface ImportItem {
   id: string;
@@ -82,17 +82,7 @@ const ImportTable = ({ imports }: ImportTableProps) => {
               <TableCell>{imp.sendingLab}</TableCell>
               <TableCell>{imp.courier}</TableCell>
               <TableCell>
-                <Badge
-                  variant="outline"
-                  className={`
-                    bg-app-status-${imp.status}/20 
-                    text-app-status-${imp.status} 
-                    border-app-status-${imp.status}/50
-                  `}
-                >
-                  {imp.status === 'draft' ? 'Draft' : 
-                   imp.status === 'progress' ? 'In Progress' : 'Complete'}
-                </Badge>
+                <ShipmentStatusBadge status={imp.status} />
               </TableCell>
               <TableCell>
                 <div className="flex items-center">
