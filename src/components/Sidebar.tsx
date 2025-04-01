@@ -56,8 +56,8 @@ const Sidebar = () => {
   return (
     <SidebarComponent>
       <SidebarHeader className="flex justify-between items-center">
-        <div className="flex items-center gap-2 px-4">
-          <span className="font-bold text-xl">Animal Shipment</span>
+        <div className="flex items-center gap-2 px-4 overflow-hidden">
+          <span className="font-bold text-lg md:text-xl truncate">Animal Shipment</span>
         </div>
         <SidebarTrigger>
           <Menu className="h-5 w-5" />
@@ -77,7 +77,7 @@ const Sidebar = () => {
               )}
             >
               {route.icon}
-              <span>{route.name}</span>
+              <span className="truncate">{route.name}</span>
             </Link>
           ))}
         </nav>

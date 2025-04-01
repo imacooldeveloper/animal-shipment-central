@@ -52,7 +52,25 @@ const Imports = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
+  
+  // Use cards by default on mobile screens
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setViewMode('card');
+      }
+    };
+    
+    // Set initial view mode based on screen size
+    handleResize();
+    
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+    
+    // Clean up
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Fetch imports from Supabase
   useEffect(() => {
@@ -133,15 +151,15 @@ const Imports = () => {
   }));
   
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Imports</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Imports</h1>
           <p className="text-muted-foreground">
             Manage and track incoming animal shipments
           </p>
         </div>
-        <Button asChild>
+        <Button asChild className="w-full md:w-auto">
           <Link to="/shipments/new">
             <Truck className="mr-2 h-4 w-4" />
             New Import
@@ -163,6 +181,7 @@ const Imports = () => {
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
             toggleViewMode={toggleViewMode}
+            viewMode={viewMode}
           />
           
           {loading ? (
@@ -170,7 +189,9 @@ const Imports = () => {
               <p className="text-muted-foreground">Loading imports...</p>
             </div>
           ) : viewMode === 'table' ? (
-            <ImportTable imports={formattedImports} />
+            <div className="overflow-x-auto">
+              <ImportTable imports={formattedImports} />
+            </div>
           ) : (
             <ImportCards imports={formattedImports} />
           )}

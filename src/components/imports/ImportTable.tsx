@@ -60,12 +60,12 @@ const ImportTable = ({ imports }: ImportTableProps) => {
         <TableHeader>
           <TableRow>
             <TableHead>Import Number</TableHead>
-            <TableHead>Sending Lab</TableHead>
-            <TableHead>Courier</TableHead>
+            <TableHead className="hidden md:table-cell">Sending Lab</TableHead>
+            <TableHead className="hidden md:table-cell">Courier</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Arrival Date</TableHead>
-            <TableHead>Animal Type</TableHead>
-            <TableHead>Type</TableHead>
+            <TableHead className="hidden md:table-cell">Arrival Date</TableHead>
+            <TableHead className="hidden md:table-cell">Animal Type</TableHead>
+            <TableHead className="hidden md:table-cell">Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -78,20 +78,32 @@ const ImportTable = ({ imports }: ImportTableProps) => {
                 >
                   {imp.id}
                 </Link>
+                <div className="md:hidden mt-1 flex flex-col space-y-1">
+                  <div className="text-xs text-muted-foreground">
+                    {imp.sendingLab}
+                  </div>
+                  <div className="text-xs">
+                    {imp.courier}
+                  </div>
+                  <div className="text-xs flex items-center">
+                    <Calendar className="mr-1 h-3 w-3 text-muted-foreground" />
+                    {imp.arrivalDate}
+                  </div>
+                </div>
               </TableCell>
-              <TableCell>{imp.sendingLab}</TableCell>
-              <TableCell>{imp.courier}</TableCell>
+              <TableCell className="hidden md:table-cell">{imp.sendingLab}</TableCell>
+              <TableCell className="hidden md:table-cell">{imp.courier}</TableCell>
               <TableCell>
                 <ShipmentStatusBadge status={imp.status} />
               </TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">
                 <div className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                   {imp.arrivalDate}
                 </div>
               </TableCell>
-              <TableCell>{imp.animalType}</TableCell>
-              <TableCell>
+              <TableCell className="hidden md:table-cell">{imp.animalType}</TableCell>
+              <TableCell className="hidden md:table-cell">
                 <ShipmentTypeBadge type="import" />
               </TableCell>
             </TableRow>

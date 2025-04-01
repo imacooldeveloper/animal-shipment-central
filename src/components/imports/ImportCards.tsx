@@ -33,25 +33,25 @@ const ImportCards = ({ imports }: ImportCardsProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {imports.map((imp) => (
         <Card key={imp.id} className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <Link to={`/shipments/${imp.id}`}>
-                <CardTitle className="text-primary hover:underline">
+                <CardTitle className="text-primary hover:underline text-lg">
                   {imp.id}
                 </CardTitle>
               </Link>
               <ShipmentStatusBadge status={imp.status} />
             </div>
-            <CardDescription>{imp.sendingLab}</CardDescription>
+            <CardDescription className="line-clamp-1">{imp.sendingLab}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Courier:</span>
-                <span className="text-sm font-medium">{imp.courier}</span>
+                <span className="text-sm font-medium truncate max-w-[60%] text-right">{imp.courier}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Arrival Date:</span>
@@ -59,7 +59,7 @@ const ImportCards = ({ imports }: ImportCardsProps) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Animal Type:</span>
-                <span className="text-sm font-medium">{imp.animalType}</span>
+                <span className="text-sm font-medium truncate max-w-[60%] text-right">{imp.animalType}</span>
               </div>
             </div>
           </CardContent>
