@@ -1,4 +1,3 @@
-
 export type ShipmentStatus = 'draft' | 'progress' | 'complete';
 
 export interface Shipment {
@@ -61,11 +60,15 @@ export interface MessageTemplate {
 export interface ImportShipment {
   importNumber: string;
   sendingLab: string;
-  courier: string;
-  arrivalDate: Date;
+  protocolNumber?: string;
+  courier?: string;
+  courierOther?: string;
+  courierAccountNumber?: string;
+  arrivalDate?: Date;
   animalType: string;
   quantity: string;
-  status: string;
+  status?: string;
+  statusOther?: string;
   notes?: string;
   documents?: File[];
   type: 'import';
@@ -75,11 +78,15 @@ export interface ExportShipment {
   exportNumber: string;
   sendingLab: string;
   destinationLab: string;
-  courier: string;
-  departureDate: Date;
+  protocolNumber?: string;
+  courier?: string;
+  courierOther?: string;
+  courierAccountNumber?: string;
+  departureDate?: Date;
   animalType: string;
   quantity: string;
-  status: string;
+  status?: string;
+  statusOther?: string;
   trackingNumber?: string;
   notes?: string;
   documents?: File[];

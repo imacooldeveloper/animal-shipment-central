@@ -36,22 +36,38 @@ import { cn } from "@/lib/utils";
 const importFormSchema = z.object({
   importNumber: z.string().min(2, "Import number is required"),
   sendingLab: z.string().min(2, "Sending lab is required"),
-  courier: z.string().min(2, "Courier is required"),
-  arrivalDate: z.date({
-    required_error: "Arrival date is required",
-  }),
+  protocolNumber: z.string().optional(),
+  courier: z.string().optional(),
+  courierOther: z.string().optional(),
+  courierAccountNumber: z.string().optional(),
+  arrivalDate: z.date().optional(),
   animalType: z.string().min(2, "Animal type is required"),
   quantity: z.string().min(1, "Quantity is required"),
-  status: z.string().min(2, "Status is required"),
+  status: z.string().optional(),
+  statusOther: z.string().optional(),
   notes: z.string().optional(),
 });
 
 const couriers = [
   "World Courier",
-  "Charles River",
-  "Biolife Logistics",
-  "Animal Transit Co.",
-  "Research Transport Services",
+  "BioTrans",
+  "Validated",
+  "MNX",
+  "Other"
+];
+
+const statuses = [
+  "Initializing Import",
+  "Waiting for Courier Response",
+  "Waiting for Vet Approval",
+  "Sent Health Reports",
+  "Documents Approved",
+  "Ready for Pickup",
+  "In Transit",
+  "Delivered",
+  "On Hold",
+  "Cancelled",
+  "Other"
 ];
 
 const animalTypes = [
@@ -72,12 +88,13 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
     resolver: zodResolver(importFormSchema),
     defaultValues: {
       importNumber: `IMP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      status: "draft",
       notes: "",
     },
   });
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const courierValue = form.watch("courier");
+  const statusValue = form.watch("status");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -90,11 +107,27 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
   };
 
   const handleFormSubmit = (values: z.infer<typeof importFormSchema>) => {
+    // Combine courier with courierOther if "Other" is selected
+    let finalCourier = values.courier;
+    if (values.courier === "Other" && values.courierOther) {
+      finalCourier = values.courierOther;
+    }
+    
+    // Combine status with statusOther if "Other" is selected
+    let finalStatus = values.status;
+    if (values.status === "Other" && values.statusOther) {
+      finalStatus = values.statusOther;
+    }
+    
     const formData = new FormData();
     Object.entries(values).forEach(([key, value]) => {
-      if (value instanceof Date) {
+      if (key === "courier") {
+        formData.append(key, finalCourier || "");
+      } else if (key === "status") {
+        formData.append(key, finalStatus || "");
+      } else if (value instanceof Date) {
         formData.append(key, value.toISOString());
-      } else {
+      } else if (value !== undefined) {
         formData.append(key, value);
       }
     });
@@ -105,6 +138,8 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
 
     onSubmit({
       ...values,
+      courier: finalCourier,
+      status: finalStatus,
       documents: documentFiles,
       type: 'import'
     });
@@ -133,6 +168,23 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
 
           <FormField
             control={form.control}
+            name="protocolNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Protocol Number</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter protocol number for billing/reference" />
+                </FormControl>
+                <FormDescription>
+                  Used for charging the lab or tracking
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="sendingLab"
             render={({ field }) => (
               <FormItem>
@@ -153,7 +205,7 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
             name="courier"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Courier</FormLabel>
+                <FormLabel>Courier (Optional)</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -174,12 +226,45 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
             )}
           />
 
+          {courierValue === "Other" && (
+            <FormField
+              control={form.control}
+              name="courierOther"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Specify Courier</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter courier name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+
+          <FormField
+            control={form.control}
+            name="courierAccountNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Courier Account Number (Optional)</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter account number if lab is paying" />
+                </FormControl>
+                <FormDescription>
+                  Account number for billing purposes
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="arrivalDate"
             render={({ field }) => (
               <FormItem className="flex flex-col">
-                <FormLabel>Arrival Date</FormLabel>
+                <FormLabel>Arrival Date (Optional)</FormLabel>
                 <Popover>
                   <PopoverTrigger asChild>
                     <FormControl>
@@ -265,17 +350,17 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>Status (Optional)</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="e.g., In Progress" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="progress">In Progress</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
+                    {statuses.map((status) => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormDescription>
@@ -285,6 +370,22 @@ const ImportShipmentForm = ({ onSubmit, onCancel }: ImportShipmentFormProps) => 
               </FormItem>
             )}
           />
+
+          {statusValue === "Other" && (
+            <FormField
+              control={form.control}
+              name="statusOther"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Custom Status</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="Enter custom status" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <FormField
