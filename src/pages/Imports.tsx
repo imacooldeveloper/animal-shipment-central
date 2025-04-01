@@ -86,10 +86,17 @@ const Imports = () => {
           throw error;
         }
         
-        setImports(data || []);
+        if (data) {
+          setImports(data);
+        } else {
+          // If no data, set empty array
+          setImports([]);
+        }
       } catch (error) {
         console.error('Error fetching imports:', error);
         toast.error('Failed to load imports. Please try again.');
+        // Set empty array in case of error
+        setImports([]);
       } finally {
         setLoading(false);
       }
@@ -142,7 +149,7 @@ const Imports = () => {
   
   // Format imports for the components
   const formattedImports: ImportItem[] = filteredImports.map(imp => ({
-    id: imp.import_number,
+    id: imp.import_number || imp.id,
     sendingLab: imp.sending_lab,
     courier: imp.courier || 'Not specified',
     status: mapStatusToShipmentStatus(imp.status),
