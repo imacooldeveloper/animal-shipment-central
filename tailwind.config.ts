@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,29 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors for the animal shipment app
+				app: {
+					blue: {
+						light: '#E5F0FF',
+						DEFAULT: '#0070F3',
+						dark: '#0050B3'
+					},
+					green: {
+						light: '#E6F7EE',
+						DEFAULT: '#10B981',
+						dark: '#059669'
+					},
+					gray: {
+						light: '#F7F7F7',
+						DEFAULT: '#EEEEEE',
+						dark: '#666666'
+					},
+					status: {
+						draft: '#9CA3AF',
+						progress: '#F59E0B',
+						complete: '#10B981'
+					}
 				}
 			},
 			borderRadius: {
