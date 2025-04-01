@@ -18,7 +18,7 @@ const Imports = () => {
   } = useImports();
   
   return (
-    <div className="space-y-4 md:space-y-6 container mx-auto px-0 md:px-2 py-4">
+    <div className="space-y-4 md:space-y-6 container mx-auto px-0 md:px-2">
       <ImportsHeader />
       
       <ImportsContent 

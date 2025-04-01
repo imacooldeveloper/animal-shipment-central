@@ -65,42 +65,46 @@ const MobileNavigation = () => {
 
   return (
     <>
-      {/* Fixed bottom navigation bar */}
-      <div className="fixed bottom-0 left-0 right-0 h-14 bg-background border-t border-border md:hidden z-20">
+      {/* Fixed top navigation bar */}
+      <div className="fixed top-0 left-0 right-0 h-14 bg-background border-b border-border md:hidden z-20">
         <div className="flex h-full items-center justify-between px-4">
-          <button 
-            onClick={handleOpenSidebar}
-            className="flex items-center justify-center rounded-md p-2 hover:bg-accent"
-          >
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Menu</span>
-          </button>
+          <div className="flex items-center">
+            <button 
+              onClick={handleOpenSidebar}
+              className="flex items-center justify-center rounded-md p-2 hover:bg-accent mr-2"
+            >
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Menu</span>
+            </button>
+            
+            <span className="font-bold text-lg truncate max-w-[120px]">Animal Shipment</span>
+          </div>
           
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center">
             {routes.slice(0, 4).map((route) => (
               <Link
                 key={route.path}
                 to={route.path}
                 className={cn(
-                  "flex flex-col items-center justify-center rounded-md p-2 hover:bg-accent",
+                  "flex items-center justify-center rounded-md p-2 hover:bg-accent",
                   location.pathname === route.path ? "text-app-blue" : "text-muted-foreground"
                 )}
               >
                 {route.icon}
-                <span className="text-[10px]">{route.name}</span>
+                <span className="sr-only">{route.name}</span>
               </Link>
             ))}
             
             <Drawer open={open} onOpenChange={setOpen}>
               <DrawerTrigger asChild>
-                <button className="flex flex-col items-center justify-center rounded-md p-2 hover:bg-accent text-muted-foreground">
+                <button className="flex items-center justify-center rounded-md p-2 hover:bg-accent text-muted-foreground">
                   <Menu className="h-5 w-5" />
-                  <span className="text-[10px]">More</span>
+                  <span className="sr-only">More</span>
                 </button>
               </DrawerTrigger>
               <DrawerContent>
                 <div className="p-4 space-y-4">
-                  <h3 className="text-lg font-medium">More Navigation</h3>
+                  <h3 className="text-lg font-medium">Navigation</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {routes.map((route) => (
                       <Link
