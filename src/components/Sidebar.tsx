@@ -11,7 +11,9 @@ import {
   FileText, 
   FolderArchive, 
   MessageSquare,
-  Menu
+  Menu,
+  Import,
+  Export
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,16 @@ const Sidebar = () => {
       name: "Dashboard",
       path: "/",
       icon: <ClipboardList className="h-5 w-5" />
+    },
+    {
+      name: "Imports",
+      path: "/imports",
+      icon: <Import className="h-5 w-5" />
+    },
+    {
+      name: "Exports",
+      path: "/exports",
+      icon: <Export className="h-5 w-5" />
     },
     {
       name: "Transfer Forms",
