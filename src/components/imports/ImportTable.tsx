@@ -39,11 +39,12 @@ const ImportTable = ({ imports }: ImportTableProps) => {
               <TableHead>Status</TableHead>
               <TableHead>Arrival Date</TableHead>
               <TableHead>Animal Type</TableHead>
+              <TableHead>Type</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={6} className="text-center h-24">
+              <TableCell colSpan={7} className="text-center h-24">
                 No import shipments found
               </TableCell>
             </TableRow>

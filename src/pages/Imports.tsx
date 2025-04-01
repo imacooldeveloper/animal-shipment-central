@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
@@ -14,46 +14,59 @@ import { ShipmentStatus } from '@/types';
 import ImportFilters from '@/components/imports/ImportFilters';
 import ImportTable from '@/components/imports/ImportTable';
 import ImportCards from '@/components/imports/ImportCards';
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Mock import data for demonstration
-const mockImports = [
-  {
-    id: "IMP-001",
-    sendingLab: "Berlin Research Center",
-    courier: "Global Express",
-    status: "progress" as ShipmentStatus,
-    arrivalDate: "2023-10-15",
-    animalType: "Rodents"
-  },
-  {
-    id: "IMP-002",
-    sendingLab: "Tokyo Life Sciences",
-    courier: "Animal Transit Co.",
-    status: "complete" as ShipmentStatus,
-    arrivalDate: "2023-09-28",
-    animalType: "Zebrafish"
-  },
-  {
-    id: "IMP-003",
-    sendingLab: "Stockholm Institute",
-    courier: "Biolife Logistics",
-    status: "draft" as ShipmentStatus,
-    arrivalDate: "2023-11-05",
-    animalType: "Rodents"
-  }
-];
+interface ImportItem {
+  id: string;
+  import_number: string;
+  sending_lab: string;
+  courier: string;
+  status: ShipmentStatus;
+  arrival_date: string;
+  animal_type: string;
+  created_at: string;
+}
 
 const Imports = () => {
+  const [imports, setImports] = useState<ImportItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   
+  // Fetch imports from Supabase
+  useEffect(() => {
+    const fetchImports = async () => {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('imports')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
+        }
+        
+        setImports(data || []);
+      } catch (error) {
+        console.error('Error fetching imports:', error);
+        toast.error('Failed to load imports. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchImports();
+  }, []);
+  
   // Filter imports based on search query and status filter
-  const filteredImports = mockImports.filter((imp) => {
+  const filteredImports = imports.filter((imp) => {
     const matchesSearch = 
-      imp.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      imp.sendingLab.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      imp.courier.toLowerCase().includes(searchQuery.toLowerCase());
+      imp.import_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      imp.sending_lab?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      imp.courier?.toLowerCase().includes(searchQuery.toLowerCase());
       
     const matchesStatus = statusFilter ? imp.status === statusFilter : true;
     
@@ -61,6 +74,16 @@ const Imports = () => {
   });
 
   const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
+  
+  // Format imports for the components
+  const formattedImports = filteredImports.map(imp => ({
+    id: imp.import_number,
+    sendingLab: imp.sending_lab,
+    courier: imp.courier || 'Not specified',
+    status: imp.status as ShipmentStatus || 'draft',
+    arrivalDate: imp.arrival_date || 'Not scheduled',
+    animalType: imp.animal_type
+  }));
   
   return (
     <div className="space-y-6">
@@ -95,10 +118,14 @@ const Imports = () => {
             toggleViewMode={toggleViewMode}
           />
           
-          {viewMode === 'table' ? (
-            <ImportTable imports={filteredImports} />
+          {loading ? (
+            <div className="flex justify-center items-center py-8">
+              <p className="text-muted-foreground">Loading imports...</p>
+            </div>
+          ) : viewMode === 'table' ? (
+            <ImportTable imports={formattedImports} />
           ) : (
-            <ImportCards imports={filteredImports} />
+            <ImportCards imports={formattedImports} />
           )}
         </CardContent>
       </Card>
