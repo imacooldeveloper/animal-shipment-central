@@ -1,3 +1,4 @@
+
 export type ShipmentStatus = 'draft' | 'progress' | 'complete';
 
 export interface Shipment {
@@ -21,6 +22,8 @@ export interface Shipment {
   };
   documents: Document[];
   timeline: TimelineEvent[];
+  labContactName?: string; // Added for lab contact
+  labContactEmail?: string; // Added for lab contact
 }
 
 export interface Document {
@@ -72,6 +75,8 @@ export interface ImportShipment {
   notes?: string;
   documents?: File[];
   type: 'import';
+  labContactName?: string;
+  labContactEmail?: string;
 }
 
 export interface ExportShipment {
@@ -91,4 +96,6 @@ export interface ExportShipment {
   notes?: string;
   documents?: File[];
   type: 'export';
+  labContactName?: string;
+  labContactEmail?: string;
 }

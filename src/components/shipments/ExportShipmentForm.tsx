@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, Info, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,6 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const exportFormSchema = z.object({
   exportNumber: z.string().min(2, "Export number is required"),
@@ -48,6 +54,8 @@ const exportFormSchema = z.object({
   statusOther: z.string().optional(),
   trackingNumber: z.string().optional(),
   notes: z.string().optional(),
+  labContactName: z.string().optional(),
+  labContactEmail: z.string().email("Invalid email address").optional(),
 });
 
 const couriers = [
@@ -62,6 +70,7 @@ const statuses = [
   "Initializing Export",
   "Waiting for Courier Response",
   "Waiting for Vet Approval",
+  "Waiting for Lab Paperwork",
   "Sent Health Reports",
   "Documents Approved",
   "Ready for Pickup",
@@ -99,6 +108,11 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   const courierValue = form.watch("courier");
   const statusValue = form.watch("status");
+  const [showWaitingInfo, setShowWaitingInfo] = useState(false);
+
+  useEffect(() => {
+    setShowWaitingInfo(statusValue === "Waiting for Lab Paperwork");
+  }, [statusValue]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -152,6 +166,15 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        {showWaitingInfo && (
+          <div className="bg-slate-100 p-4 rounded-md border border-slate-200 flex items-start space-x-3 mb-4">
+            <Info className="text-slate-500 h-5 w-5 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-slate-600">
+              You're waiting on lab paperwork. You can leave the other fields blank for now and update this shipment later.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
@@ -215,6 +238,40 @@ const ExportShipmentForm = ({ onSubmit, onCancel }: ExportShipmentFormProps) => 
                 </FormControl>
                 <FormDescription>
                   Where the animals are going to
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="labContactName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lab Contact Name</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="Enter contact name at the lab" />
+                </FormControl>
+                <FormDescription>
+                  Person to contact for lab-related questions
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="labContactEmail"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Lab Contact Email</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="contact@lab.edu" type="email" />
+                </FormControl>
+                <FormDescription>
+                  Email for follow-up communication
                 </FormDescription>
                 <FormMessage />
               </FormItem>
