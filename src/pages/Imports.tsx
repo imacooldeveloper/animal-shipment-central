@@ -18,7 +18,7 @@ const Imports = () => {
   } = useImports();
   
   return (
-    <div className={`space-y-4 md:space-y-6 container mx-auto ${isMobile ? 'px-2' : 'px-2 md:p-0'} py-4`}>
+    <div className="space-y-4 md:space-y-6 container mx-auto px-0 md:px-2 py-4">
       <ImportsHeader />
       
       <ImportsContent 

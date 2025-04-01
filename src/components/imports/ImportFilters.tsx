@@ -28,7 +28,7 @@ const ImportFilters = ({
   viewMode
 }: ImportFiltersProps) => {
   return (
-    <div className="flex flex-col space-y-4 mb-6">
+    <div className="flex flex-col space-y-4 mb-4 md:mb-6">
       <div className="relative w-full">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
@@ -53,7 +53,7 @@ const ImportFilters = ({
         </Select>
         
         <div className="flex gap-2 mt-2 sm:mt-0">
-          <Button variant="outline" size="icon" className="ml-auto">
+          <Button variant="outline" size="icon" className="sm:ml-auto">
             <Filter className="h-4 w-4" />
           </Button>
           
