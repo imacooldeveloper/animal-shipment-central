@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Search, Filter, LayoutList, LayoutGrid } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { 
@@ -11,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
-interface ImportFiltersProps {
+interface ExportFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   statusFilter: string;
@@ -19,19 +18,19 @@ interface ImportFiltersProps {
   toggleViewMode: () => void;
 }
 
-const ImportFilters = ({ 
+const ExportFilters = ({ 
   searchQuery, 
   setSearchQuery, 
   statusFilter, 
   setStatusFilter,
   toggleViewMode
-}: ImportFiltersProps) => {
+}: ExportFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <div className="relative w-full sm:w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search imports..."
+          placeholder="Search exports..."
           className="pl-8"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -67,4 +66,4 @@ const ImportFilters = ({
   );
 };
 
-export default ImportFilters;
+export default ExportFilters;
