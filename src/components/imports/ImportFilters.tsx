@@ -39,7 +39,7 @@ const ImportFilters = ({
         />
       </div>
       
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-full sm:w-36">
             <SelectValue placeholder="All statuses" />
@@ -52,8 +52,8 @@ const ImportFilters = ({
           </SelectContent>
         </Select>
         
-        <div className="flex gap-2 ml-auto">
-          <Button variant="outline" size="icon">
+        <div className="flex gap-2 mt-2 sm:mt-0">
+          <Button variant="outline" size="icon" className="ml-auto">
             <Filter className="h-4 w-4" />
           </Button>
           

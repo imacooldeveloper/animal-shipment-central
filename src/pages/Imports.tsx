@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
@@ -10,155 +9,25 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Truck } from 'lucide-react';
-import { ShipmentStatus } from '@/types';
 import ImportFilters from '@/components/imports/ImportFilters';
 import ImportTable from '@/components/imports/ImportTable';
 import ImportCards from '@/components/imports/ImportCards';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-
-// Database item structure from Supabase
-interface ImportDatabaseItem {
-  id: string;
-  import_number: string;
-  sending_lab: string;
-  courier: string | null;
-  status: string | null;
-  arrival_date: string | null;
-  animal_type: string;
-  created_at: string;
-  // Additional fields that might be in the database
-  courier_account_number?: string | null;
-  created_by?: string | null;
-  lab_contact_email?: string | null;
-  lab_contact_name?: string | null;
-  notes?: string | null;
-  protocol_number?: string | null;
-  quantity?: string;
-}
-
-// Interface for component props (after formatting)
-interface ImportItem {
-  id: string;
-  sendingLab: string;
-  courier: string;
-  status: ShipmentStatus;
-  arrivalDate: string;
-  animalType: string;
-}
+import { useImports } from '@/hooks/useImports';
 
 const Imports = () => {
-  const [imports, setImports] = useState<ImportDatabaseItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [viewMode, setViewMode] = useState<'table' | 'card'>('card');
-  
-  // Use cards by default on mobile screens
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setViewMode('card');
-      }
-    };
-    
-    // Set initial view mode based on screen size
-    handleResize();
-    
-    // Add event listener
-    window.addEventListener('resize', handleResize);
-    
-    // Clean up
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
-  // Fetch imports from Supabase
-  useEffect(() => {
-    const fetchImports = async () => {
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('imports')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data) {
-          setImports(data);
-        } else {
-          // If no data, set empty array
-          setImports([]);
-        }
-      } catch (error) {
-        console.error('Error fetching imports:', error);
-        toast.error('Failed to load imports. Please try again.');
-        // Set empty array in case of error
-        setImports([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchImports();
-  }, []);
-  
-  // Map database status string to ShipmentStatus enum
-  const mapStatusToShipmentStatus = (status: string | null): ShipmentStatus => {
-    if (!status) return 'draft';
-    
-    // Map common status values to ShipmentStatus
-    if (status.toLowerCase().includes('draft') || 
-        status.toLowerCase().includes('init') || 
-        status === 'Initializing Import') {
-      return 'draft';
-    }
-    
-    if (status.toLowerCase().includes('progress') || 
-        status.toLowerCase().includes('transit') || 
-        status.toLowerCase().includes('waiting')) {
-      return 'progress';
-    }
-    
-    if (status.toLowerCase().includes('complete') || 
-        status.toLowerCase().includes('delivered')) {
-      return 'complete';
-    }
-    
-    // Default fallback
-    return 'draft';
-  };
-  
-  // Filter imports based on search query and status filter
-  const filteredImports = imports.filter((imp) => {
-    const matchesSearch = 
-      imp.import_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      imp.sending_lab?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      imp.courier?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-    // For filtering, convert the database status to our component status type
-    const shipmentStatus = mapStatusToShipmentStatus(imp.status);
-    const matchesStatus = statusFilter ? shipmentStatus === statusFilter : true;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
-  
-  // Format imports for the components
-  const formattedImports: ImportItem[] = filteredImports.map(imp => ({
-    id: imp.import_number || imp.id,
-    sendingLab: imp.sending_lab,
-    courier: imp.courier || 'Not specified',
-    status: mapStatusToShipmentStatus(imp.status),
-    arrivalDate: imp.arrival_date || 'Not scheduled',
-    animalType: imp.animal_type
-  }));
+  const {
+    imports,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    viewMode,
+    toggleViewMode
+  } = useImports();
   
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 container mx-auto px-2 py-4 md:p-0">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Imports</h1>
@@ -174,7 +43,7 @@ const Imports = () => {
         </Button>
       </div>
       
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle>Import Shipments</CardTitle>
           <CardDescription>
@@ -197,10 +66,10 @@ const Imports = () => {
             </div>
           ) : viewMode === 'table' ? (
             <div className="overflow-x-auto">
-              <ImportTable imports={formattedImports} />
+              <ImportTable imports={imports} />
             </div>
           ) : (
-            <ImportCards imports={formattedImports} />
+            <ImportCards imports={imports} />
           )}
         </CardContent>
       </Card>
