@@ -57,3 +57,31 @@ export interface MessageTemplate {
   content: string;
   variables: string[];
 }
+
+export interface ImportShipment {
+  importNumber: string;
+  sendingLab: string;
+  courier: string;
+  arrivalDate: Date;
+  animalType: string;
+  quantity: string;
+  status: string;
+  notes?: string;
+  documents?: File[];
+  type: 'import';
+}
+
+export interface ExportShipment {
+  exportNumber: string;
+  sendingLab: string;
+  destinationLab: string;
+  courier: string;
+  departureDate: Date;
+  animalType: string;
+  quantity: string;
+  status: string;
+  trackingNumber?: string;
+  notes?: string;
+  documents?: File[];
+  type: 'export';
+}
