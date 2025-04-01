@@ -12,8 +12,8 @@ import {
   FolderArchive, 
   MessageSquare,
   Menu,
-  Import,
-  Export
+  ArrowDownCircle,
+  ArrowUpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -29,12 +29,12 @@ const Sidebar = () => {
     {
       name: "Imports",
       path: "/imports",
-      icon: <Import className="h-5 w-5" />
+      icon: <ArrowDownCircle className="h-5 w-5" />
     },
     {
       name: "Exports",
       path: "/exports",
-      icon: <Export className="h-5 w-5" />
+      icon: <ArrowUpCircle className="h-5 w-5" />
     },
     {
       name: "Transfer Forms",
