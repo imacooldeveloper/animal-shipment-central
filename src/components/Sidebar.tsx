@@ -16,9 +16,11 @@ import {
   ArrowUpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const Sidebar = () => {
   const location = useLocation();
+  const { state, openMobile, setOpenMobile } = useSidebar();
 
   const routes = [
     {
@@ -75,6 +77,12 @@ const Sidebar = () => {
                   ? "bg-app-blue-light text-app-blue font-medium"
                   : "text-gray-700 hover:bg-gray-100"
               )}
+              onClick={() => {
+                // Close sidebar on mobile when a link is clicked
+                if (openMobile) {
+                  setOpenMobile(false);
+                }
+              }}
             >
               {route.icon}
               <span className="truncate">{route.name}</span>
