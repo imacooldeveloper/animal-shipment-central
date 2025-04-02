@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShipmentStatus } from '@/types';
+import { mapStatusToShipmentStatus } from '@/lib/utils';
 
 // Interface for database items
 export interface ImportDatabaseItem {
