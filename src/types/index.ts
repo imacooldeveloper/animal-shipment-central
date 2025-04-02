@@ -99,3 +99,21 @@ export interface ExportShipment {
   labContactName?: string;
   labContactEmail?: string;
 }
+
+export interface ImportChecklist {
+  transferForms: boolean;
+  healthCert: boolean;
+  importPermit: boolean;
+  courier: boolean;
+  animalReceipt: boolean;
+  facilitiesReady: boolean;
+}
+
+export interface ExportChecklist {
+  transferForms: boolean;
+  healthCert: boolean;
+  exportPermit: boolean;
+  courier: boolean;
+  pickupDate: boolean;
+  packageReady: boolean;
+}

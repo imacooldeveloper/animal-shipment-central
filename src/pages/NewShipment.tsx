@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
 import ExportShipmentForm from '@/components/shipments/ExportShipmentForm';
 import ImportChecklistCard, { DEFAULT_CHECKLIST } from '@/components/imports/ImportChecklistCard';
+import ExportChecklistCard, { DEFAULT_EXPORT_CHECKLIST } from '@/components/exports/ExportChecklistCard';
 
 const NewShipment = () => {
   const [shipmentType, setShipmentType] = useState<'import' | 'export'>('import');
@@ -58,11 +59,14 @@ const NewShipment = () => {
     const checklist = { ...DEFAULT_CHECKLIST };
     
     // Auto-populate checklist based on form data
-    if (formattedData.sending_lab) checklist.transferForms = true;
+    if (formattedData.sendingLab) checklist.transferForms = true;
     if (formattedData.courier) checklist.courier = true;
     if (formattedData.arrival_date) checklist.animalReceipt = true;
     if (formattedData.lab_contact_email && formattedData.lab_contact_name) {
       checklist.importPermit = true;
+    }
+    if (formattedData.animalType && formattedData.quantity) {
+      checklist.healthCert = true;
     }
     
     // Remove fields that aren't in the database schema
@@ -99,6 +103,20 @@ const NewShipment = () => {
       departure_date: data.departureDate ? new Date(data.departureDate).toISOString().split('T')[0] : null
     };
     
+    // Create a checklist based on form data
+    const checklist = { ...DEFAULT_EXPORT_CHECKLIST };
+    
+    // Auto-populate checklist based on form data
+    if (formattedData.sendingLab && formattedData.destinationLab) checklist.transferForms = true;
+    if (formattedData.courier) checklist.courier = true;
+    if (formattedData.departure_date) checklist.pickupDate = true;
+    if (formattedData.lab_contact_email && formattedData.lab_contact_name) {
+      checklist.exportPermit = true;
+    }
+    if (formattedData.animalType && formattedData.quantity) {
+      checklist.healthCert = true;
+    }
+    
     // Remove fields that aren't in the database schema
     delete formattedData.departureDate;
     delete formattedData.documents;
@@ -120,7 +138,8 @@ const NewShipment = () => {
         tracking_number: formattedData.trackingNumber,
         notes: formattedData.notes,
         lab_contact_name: formattedData.labContactName,
-        lab_contact_email: formattedData.labContactEmail
+        lab_contact_email: formattedData.labContactEmail,
+        checklist: JSON.stringify(checklist)
       } as any);
       
     if (response.error) throw response.error;
@@ -176,15 +195,21 @@ const NewShipment = () => {
           </Card>
         </div>
         
-        {shipmentType === 'import' && (
-          <div className="md:col-span-1">
+        <div className="md:col-span-1">
+          {shipmentType === 'import' ? (
             <ImportChecklistCard 
               importId="new-import"
               initialChecklist={DEFAULT_CHECKLIST}
               formData={formData}
             />
-          </div>
-        )}
+          ) : (
+            <ExportChecklistCard 
+              exportId="new-export"
+              initialChecklist={DEFAULT_EXPORT_CHECKLIST}
+              formData={formData}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

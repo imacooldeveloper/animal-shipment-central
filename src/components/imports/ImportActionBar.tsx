@@ -24,38 +24,40 @@ const ImportActionBar = ({
 }: ImportActionBarProps) => {
   return (
     <div className="mb-6 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={onGoBack}>
+          <Button variant="ghost" size="icon" onClick={onGoBack} aria-label="Go back">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-2xl font-bold">{importNumber}</h1>
         </div>
         
-        {!isEditing ? (
-          <Button onClick={onToggleEdit} className="flex items-center gap-2">
-            <Pencil className="h-4 w-4" /> Edit Import
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={onCancel}
-              className="flex items-center gap-2"
-            >
-              <X className="h-4 w-4" /> Cancel
+        <div className="sm:ml-auto">
+          {!isEditing ? (
+            <Button onClick={onToggleEdit} className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" /> <span className="hidden sm:inline">Edit Import</span>
             </Button>
-            <Button 
-              type="submit"
-              form="import-edit-form"
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
-              disabled={isPending}
-            >
-              <Save className="h-4 w-4" /> 
-              {isPending ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </div>
-        )}
+          ) : (
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={onCancel}
+                className="flex items-center gap-2"
+              >
+                <X className="h-4 w-4" /> <span className="hidden sm:inline">Cancel</span>
+              </Button>
+              <Button 
+                type="submit"
+                form="import-edit-form"
+                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700"
+                disabled={isPending}
+              >
+                <Save className="h-4 w-4" /> 
+                <span className="hidden sm:inline">{isPending ? 'Saving...' : 'Save Changes'}</span>
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {progressValue > 0 && (

@@ -17,26 +17,26 @@ export interface ChecklistItem {
   description: string;
 }
 
-export interface ImportChecklist {
+export interface ExportChecklist {
   transferForms: boolean;
   healthCert: boolean;
-  importPermit: boolean;
+  exportPermit: boolean;
   courier: boolean;
-  animalReceipt: boolean;
-  facilitiesReady: boolean;
+  pickupDate: boolean;
+  packageReady: boolean;
 }
 
-export const DEFAULT_CHECKLIST: ImportChecklist = {
+export const DEFAULT_EXPORT_CHECKLIST: ExportChecklist = {
   transferForms: false,
   healthCert: false,
-  importPermit: false,
+  exportPermit: false,
   courier: false,
-  animalReceipt: false,
-  facilitiesReady: false,
+  pickupDate: false,
+  packageReady: false,
 };
 
-// Checklist items with descriptions that match the UI in the image
-export const IMPORT_CHECKLIST_ITEMS: ChecklistItem[] = [
+// Checklist items for export shipments
+export const EXPORT_CHECKLIST_ITEMS: ChecklistItem[] = [
   {
     key: 'transferForms',
     label: 'Upload transfer forms',
@@ -45,55 +45,55 @@ export const IMPORT_CHECKLIST_ITEMS: ChecklistItem[] = [
   {
     key: 'healthCert',
     label: 'Verify health certificate',
-    description: 'Check sender\'s health certificate'
+    description: 'Check health certificate requirements'
   },
   {
-    key: 'importPermit',
-    label: 'Import permit verified',
-    description: 'Verify all import permits are in order'
+    key: 'exportPermit',
+    label: 'Export permit verified',
+    description: 'Verify all export permits are in order'
   },
   {
     key: 'courier',
     label: 'Confirm courier details',
-    description: 'Verify courier and delivery information'
+    description: 'Verify courier and shipping information'
   },
   {
-    key: 'animalReceipt',
-    label: 'Plan animal receipt',
-    description: 'Schedule personnel for receiving'
+    key: 'pickupDate',
+    label: 'Schedule pickup date',
+    description: 'Confirm pickup time and date'
   },
   {
-    key: 'facilitiesReady',
-    label: 'Facilities ready',
-    description: 'Ensure housing is prepared'
+    key: 'packageReady',
+    label: 'Package ready',
+    description: 'Ensure shipping package is properly prepared'
   }
 ];
 
-interface ImportChecklistCardProps {
-  importId: string;
-  initialChecklist: ImportChecklist;
+interface ExportChecklistCardProps {
+  exportId: string;
+  initialChecklist: ExportChecklist;
   formData?: any;
 }
 
-const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChecklistCardProps) => {
-  const [checklist, setChecklist] = useState<ImportChecklist>(initialChecklist);
+const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChecklistCardProps) => {
+  const [checklist, setChecklist] = useState<ExportChecklist>(initialChecklist);
   const queryClient = useQueryClient();
 
   // Update checklist mutation
   const updateChecklistMutation = useMutation({
-    mutationFn: async (checklistData: ImportChecklist) => {
+    mutationFn: async (checklistData: ExportChecklist) => {
       const { error } = await supabase
-        .from('imports')
+        .from('exports')
         .update({
           checklist: JSON.stringify(checklistData)
         })
-        .eq('import_number', importId);
+        .eq('export_number', exportId);
       
       if (error) throw error;
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['import', importId] });
+      queryClient.invalidateQueries({ queryKey: ['export', exportId] });
       toast.success('Checklist updated successfully');
     },
     onError: (error) => {
@@ -108,7 +108,7 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
       let updatedChecklist = { ...checklist };
       
       // Auto-update based on form fields
-      if (formData.sendingLab && formData.sendingLab.trim() !== '') {
+      if (formData.sendingLab && formData.destinationLab) {
         updatedChecklist.transferForms = true;
       }
       
@@ -116,12 +116,12 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
         updatedChecklist.courier = true;
       }
       
-      if (formData.arrivalDate) {
-        updatedChecklist.animalReceipt = true;
+      if (formData.departureDate) {
+        updatedChecklist.pickupDate = true;
       }
       
       if (formData.labContactEmail && formData.labContactName) {
-        updatedChecklist.importPermit = true;
+        updatedChecklist.exportPermit = true;
       }
 
       if (formData.animalType && formData.quantity) {
@@ -129,14 +129,14 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
       }
       
       if (formData.status && formData.status.toLowerCase().includes('ready')) {
-        updatedChecklist.facilitiesReady = true;
+        updatedChecklist.packageReady = true;
       }
       
       setChecklist(updatedChecklist);
     }
   }, [formData]);
 
-  const updateChecklistItem = (key: keyof ImportChecklist, value: boolean) => {
+  const updateChecklistItem = (key: keyof ExportChecklist, value: boolean) => {
     setChecklist(prev => ({
       ...prev,
       [key]: value
@@ -159,23 +159,23 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
     <Card>
       <CardHeader>
         <CardTitle>Coordinator Checklist</CardTitle>
-        <CardDescription>Track import completion status</CardDescription>
+        <CardDescription>Track export completion status</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {IMPORT_CHECKLIST_ITEMS.map((item) => (
+          {EXPORT_CHECKLIST_ITEMS.map((item) => (
             <div key={item.key} className="flex items-start space-x-2">
               <Checkbox 
-                id={`import-${item.key}`} 
-                checked={checklist[item.key as keyof ImportChecklist]}
+                id={`export-${item.key}`} 
+                checked={checklist[item.key as keyof ExportChecklist]}
                 onCheckedChange={(checked) => 
-                  updateChecklistItem(item.key as keyof ImportChecklist, checked as boolean)
+                  updateChecklistItem(item.key as keyof ExportChecklist, checked as boolean)
                 }
                 className="mt-1"
               />
               <div className="space-y-1 leading-none">
                 <Label
-                  htmlFor={`import-${item.key}`}
+                  htmlFor={`export-${item.key}`}
                   className="flex items-center gap-2 cursor-pointer font-medium"
                 >
                   {item.label}
@@ -209,4 +209,4 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
   );
 };
 
-export default ImportChecklistCard;
+export default ExportChecklistCard;
