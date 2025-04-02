@@ -6,6 +6,18 @@ interface ShipmentTimelineProps {
 }
 
 const ShipmentTimeline = ({ events }: ShipmentTimelineProps) => {
+  // Return early if there are no events
+  if (!events || events.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Shipment Timeline</h3>
+        <div className="text-center py-4 border rounded-md">
+          <p className="text-muted-foreground">No timeline events available</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Shipment Timeline</h3>

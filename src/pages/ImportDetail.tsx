@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ImportDatabaseItem } from '@/hooks/useImports';
 import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
-import ImportChecklistCard, { DEFAULT_CHECKLIST, ImportChecklist } from '@/components/imports/ImportChecklistCard';
+import ImportChecklistCard, { ImportChecklist, DEFAULT_CHECKLIST } from '@/components/imports/ImportChecklistCard';
 import ImportActionBar from '@/components/imports/ImportActionBar';
 
 const ImportDetail = () => {
