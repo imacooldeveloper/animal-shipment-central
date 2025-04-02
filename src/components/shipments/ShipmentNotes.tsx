@@ -32,8 +32,16 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
     }
     
     try {
-      const parsed = typeof notes === 'string' ? JSON.parse(notes) : notes;
-      return Array.isArray(parsed) ? parsed : [createSingleNote(String(notes))];
+      // Fixed: Using a simpler approach to parse the string without causing infinite recursion
+      if (typeof notes === 'string') {
+        try {
+          const parsed = JSON.parse(notes);
+          return Array.isArray(parsed) ? parsed : [createSingleNote(notes)];
+        } catch (e) {
+          return [createSingleNote(notes)];
+        }
+      }
+      return [];
     } catch (e) {
       // If parsing fails, treat as a single note
       return typeof notes === 'string' ? [createSingleNote(notes)] : [];
