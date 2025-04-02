@@ -7,13 +7,16 @@ import {
   SidebarTrigger
 } from "@/components/ui/sidebar";
 import { 
-  LayoutDashboard, 
+  Box, 
   FileText, 
   FolderArchive, 
   MessageSquare,
   Menu,
   ArrowDownCircle,
-  ArrowUpCircle
+  ArrowUpCircle,
+  Users,
+  Calendar,
+  BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -26,7 +29,12 @@ const Sidebar = () => {
     {
       name: "Dashboard",
       path: "/",
-      icon: <LayoutDashboard className="h-5 w-5" />
+      icon: <Box className="h-5 w-5" />
+    },
+    {
+      name: "Shipments",
+      path: "/shipments",
+      icon: <Box className="h-5 w-5" />
     },
     {
       name: "Imports",
@@ -39,14 +47,14 @@ const Sidebar = () => {
       icon: <ArrowUpCircle className="h-5 w-5" />
     },
     {
-      name: "Transfer Forms",
-      path: "/transfer-forms",
-      icon: <FileText className="h-5 w-5" />
-    },
-    {
       name: "Documents",
       path: "/documents",
       icon: <FolderArchive className="h-5 w-5" />
+    },
+    {
+      name: "Transfer Forms",
+      path: "/transfer-forms",
+      icon: <FileText className="h-5 w-5" />
     },
     {
       name: "Message Templates",
@@ -59,7 +67,7 @@ const Sidebar = () => {
     <SidebarComponent>
       <SidebarHeader className="flex justify-between items-center">
         <div className="flex items-center gap-2 px-4 overflow-hidden">
-          <span className="font-bold text-xl text-rose-500">Import Export System</span>
+          <span className="font-bold text-xl text-rose-500">Animal Shipment System</span>
         </div>
         <SidebarTrigger>
           <Menu className="h-5 w-5" />
