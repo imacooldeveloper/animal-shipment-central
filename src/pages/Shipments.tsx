@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Table, 
   TableBody, 
@@ -57,6 +57,7 @@ interface CombinedShipment {
 }
 
 const Shipments = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [typeFilter, setTypeFilter] = useState<string>("");
@@ -80,14 +81,20 @@ const Shipments = () => {
           .from('imports')
           .select('*');
         
-        if (importsError) throw importsError;
+        if (importsError) {
+          console.error("Error fetching imports:", importsError);
+          throw importsError;
+        }
         
         // Fetch exports
         const { data: exportsData, error: exportsError } = await supabase
           .from('exports')
           .select('*');
         
-        if (exportsError) throw exportsError;
+        if (exportsError) {
+          console.error("Error fetching exports:", exportsError);
+          throw exportsError;
+        }
         
         console.log('Fetched imports:', importsData?.length || 0);
         console.log('Fetched exports:', exportsData?.length || 0);
@@ -127,6 +134,8 @@ const Shipments = () => {
         
         if (allShipments.length === 0) {
           console.log("No shipments found in the database");
+        } else {
+          console.log(`Found ${allShipments.length} total shipments`);
         }
         
         setShipments(allShipments);
@@ -242,13 +251,14 @@ const Shipments = () => {
                   </SelectContent>
                 </Select>
                 
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" title="Filter">
                   <Filter className="h-4 w-4" />
                 </Button>
                 
                 <Button 
                   variant="outline" 
                   size="icon"
+                  title={viewMode === 'table' ? 'Switch to card view' : 'Switch to table view'}
                   onClick={() => setViewMode(viewMode === 'table' ? 'card' : 'table')}
                 >
                   <ArrowUpDown className="h-4 w-4" />
@@ -336,7 +346,7 @@ const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 
               <TableRow key={shipment.id}>
                 <TableCell className="font-medium">
                   <Link 
-                    to={`/shipments/${shipment.id}`}
+                    to={`/${shipment.type}s/${shipment.id}`}
                     className={`hover:underline ${
                       shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'
                     }`}
@@ -373,7 +383,7 @@ const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 
           <Card key={shipment.id} className="overflow-hidden">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <Link to={`/shipments/${shipment.id}`}>
+                <Link to={`/${shipment.type}s/${shipment.id}`}>
                   <CardTitle 
                     className={`hover:underline ${
                       shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'

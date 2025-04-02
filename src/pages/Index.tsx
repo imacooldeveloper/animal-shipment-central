@@ -1,6 +1,9 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import DashboardCards from "@/components/dashboard/DashboardCards";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Package } from "lucide-react";
 
 const Index = () => {
   // Sample counts for the dashboard cards, now including imports and exports
@@ -20,6 +23,27 @@ const Index = () => {
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Navigation Dashboard</h2>
         <DashboardCards counts={counts} />
+      </section>
+      
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">View All Shipments</CardTitle>
+              <CardDescription>Access all import and export shipments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full bg-rose-500 hover:bg-rose-600">
+                <Link to="/shipments">
+                  <Package className="mr-2 h-4 w-4" />
+                  Go to Shipments
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </section>
       
       <section>
