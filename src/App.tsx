@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import Dashboard from "./pages/Dashboard";
 import TransferForms from "./pages/TransferForms";
@@ -33,8 +33,10 @@ const App = () => (
             <Route path="shipments" element={<Shipments />} />
             <Route path="shipments/new" element={<NewShipment />} />
             <Route path="imports" element={<Imports />} />
+            <Route path="imports/new" element={<Navigate to="/shipments/new?type=import" replace />} />
             <Route path="imports/:id" element={<ImportDetail />} />
             <Route path="exports" element={<Exports />} />
+            <Route path="exports/new" element={<Navigate to="/shipments/new?type=export" replace />} />
             <Route path="transfer-forms" element={<TransferForms />} />
             <Route path="transfer-forms/:id" element={<FormDetail />} />
             <Route path="documents" element={<Documents />} />

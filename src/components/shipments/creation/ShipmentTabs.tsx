@@ -1,4 +1,10 @@
 
+/**
+ * This component is deprecated and no longer in use.
+ * We've moved to dedicated forms for imports and exports without tabs.
+ * Keeping this file for reference in case we need to revert or adapt later.
+ */
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
 import ExportShipmentForm from '@/components/shipments/ExportShipmentForm';

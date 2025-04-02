@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Card, 
   CardContent, 
@@ -9,12 +9,17 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { toast } from "sonner";
-import ShipmentTabs from '@/components/shipments/creation/ShipmentTabs';
+import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
+import ExportShipmentForm from '@/components/shipments/ExportShipmentForm';
 import ChecklistContainer from '@/components/shipments/creation/ChecklistContainer';
 import { handleImportSubmit, handleExportSubmit } from '@/components/shipments/creation/DataHandlers';
 
 const NewShipment = () => {
-  const [shipmentType, setShipmentType] = useState<'import' | 'export'>('import');
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialType = queryParams.get('type') === 'export' ? 'export' : 'import';
+  
+  const [shipmentType, setShipmentType] = useState<'import' | 'export'>(initialType);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<any>(null);
   const navigate = useNavigate();
@@ -51,12 +56,18 @@ const NewShipment = () => {
     }
   };
 
+  // Page title and description based on shipment type
+  const pageTitle = shipmentType === 'import' ? 'New Import Shipment' : 'New Export Shipment';
+  const pageDescription = shipmentType === 'import' 
+    ? 'Create a new animal import record' 
+    : 'Create a new animal export record';
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">New Shipment</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
         <p className="text-muted-foreground">
-          Create a new animal shipment record
+          {pageDescription}
         </p>
       </div>
       
@@ -66,17 +77,23 @@ const NewShipment = () => {
             <CardHeader className="pb-4">
               <CardTitle>Shipment Details</CardTitle>
               <CardDescription>
-                Fill out the details for your new shipment
+                Fill out the details for your {shipmentType} shipment
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ShipmentTabs 
-                shipmentType={shipmentType}
-                setShipmentType={setShipmentType}
-                onSubmit={handleSubmit}
-                onCancel={handleCancel}
-                isSubmitting={isSubmitting}
-              />
+              {shipmentType === 'import' ? (
+                <ImportShipmentForm 
+                  onSubmit={handleSubmit}
+                  onCancel={handleCancel}
+                  isSubmitting={isSubmitting}
+                />
+              ) : (
+                <ExportShipmentForm 
+                  onSubmit={handleSubmit}
+                  onCancel={handleCancel}
+                  isSubmitting={isSubmitting}
+                />
+              )}
             </CardContent>
           </Card>
         </div>
