@@ -31,21 +31,19 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       return notes;
     }
     
-    try {
-      // Fixed: Using a simpler approach to parse the string without causing infinite recursion
-      if (typeof notes === 'string') {
-        try {
-          const parsed = JSON.parse(notes);
-          return Array.isArray(parsed) ? parsed : [createSingleNote(notes)];
-        } catch (e) {
-          return [createSingleNote(notes)];
-        }
+    // Handle string type notes
+    if (typeof notes === 'string') {
+      try {
+        const parsed = JSON.parse(notes);
+        return Array.isArray(parsed) ? parsed : [createSingleNote(notes)];
+      } catch (e) {
+        // If JSON parsing fails, treat as a single note
+        return [createSingleNote(notes)];
       }
-      return [];
-    } catch (e) {
-      // If parsing fails, treat as a single note
-      return typeof notes === 'string' ? [createSingleNote(notes)] : [];
     }
+    
+    // Default fallback
+    return [];
   }
   
   // Helper function to create a single note from string content
