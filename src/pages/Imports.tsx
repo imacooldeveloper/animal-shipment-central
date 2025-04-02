@@ -29,7 +29,8 @@ const Imports = () => {
     currentPage,
     totalPages,
     handlePageChange,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
+    handleDateRangeChange
   } = useImports();
   
   return (
@@ -45,6 +46,7 @@ const Imports = () => {
         setStatusFilter={setStatusFilter}
         viewMode={viewMode}
         toggleViewMode={toggleViewMode}
+        onDateRangeChange={handleDateRangeChange}
       />
       
       {/* Pagination for imports */}

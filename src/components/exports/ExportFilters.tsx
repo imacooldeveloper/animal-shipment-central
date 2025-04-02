@@ -17,6 +17,7 @@ interface ExportFiltersProps {
   setStatusFilter: (status: string) => void;
   toggleViewMode: () => void;
   viewMode: 'table' | 'card';
+  onDateRangeChange?: (startDate: Date | undefined, endDate: Date | undefined) => void;
 }
 
 const ExportFilters = ({ 

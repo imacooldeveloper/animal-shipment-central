@@ -17,6 +17,7 @@ interface ImportFiltersProps {
   setStatusFilter: (status: string) => void;
   toggleViewMode: () => void;
   viewMode: 'table' | 'card';
+  onDateRangeChange?: (startDate: Date | undefined, endDate: Date | undefined) => void;
 }
 
 const ImportFilters = ({ 
@@ -28,8 +29,8 @@ const ImportFilters = ({
   viewMode
 }: ImportFiltersProps) => {
   return (
-    <div className="flex flex-col space-y-4 mb-4 md:mb-6">
-      <div className="relative w-full">
+    <div className="flex flex-col sm:flex-row gap-4 mb-6">
+      <div className="relative w-full sm:w-72">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search imports..."
@@ -39,9 +40,9 @@ const ImportFilters = ({
         />
       </div>
       
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+      <div className="flex gap-2">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-36">
+          <SelectTrigger className="w-36">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -52,23 +53,21 @@ const ImportFilters = ({
           </SelectContent>
         </Select>
         
-        <div className="flex gap-2 mt-2 sm:mt-0">
-          <Button variant="outline" size="icon" className="sm:ml-auto">
-            <Filter className="h-4 w-4" />
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={toggleViewMode}
-            title={viewMode === 'table' ? 'Switch to card view' : 'Switch to table view'}
-          >
-            {viewMode === 'table' ? 
-              <LayoutGrid className="h-4 w-4" /> : 
-              <LayoutList className="h-4 w-4" />
-            }
-          </Button>
-        </div>
+        <Button variant="outline" size="icon">
+          <Filter className="h-4 w-4" />
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={toggleViewMode}
+          title={viewMode === 'table' ? 'Switch to card view' : 'Switch to table view'}
+        >
+          {viewMode === 'table' ? 
+            <LayoutGrid className="h-4 w-4" /> : 
+            <LayoutList className="h-4 w-4" />
+          }
+        </Button>
       </div>
     </div>
   );

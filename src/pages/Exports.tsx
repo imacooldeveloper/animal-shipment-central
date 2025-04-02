@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import {
   CardHeader, 
   CardTitle 
 } from "@/components/ui/card";
-import { Truck } from 'lucide-react';
+import { Truck, Calendar } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,6 +26,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { format } from 'date-fns';
+import DateRangeFilter from '@/components/shared/DateRangeFilter';
+import { PAGINATION_CONSTANTS } from "@/lib/constants";
 
 // Interface for database items
 export interface ExportDatabaseItem {
@@ -57,9 +66,10 @@ export interface ExportItem {
   departureDate: string;
   animalType: string;
   country: string;
+  createdAt: string;
 }
 
-const ITEMS_PER_PAGE = 15;
+const ITEMS_PER_PAGE = PAGINATION_CONSTANTS.ITEMS_PER_PAGE;
 
 const Exports = () => {
   const [exports, setExports] = useState<ExportDatabaseItem[]>([]);
@@ -70,6 +80,10 @@ const Exports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filteredExports, setFilteredExports] = useState<ExportItem[]>([]);
+  
+  // Date range filters
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   
   // Use cards by default on mobile screens
   useEffect(() => {
@@ -130,7 +144,14 @@ const Exports = () => {
       const shipmentStatus = mapStatusToShipmentStatus(exp.status);
       const matchesStatus = statusFilter === 'all' ? true : shipmentStatus === statusFilter;
       
-      return matchesSearch && matchesStatus;
+      // Date range filtering
+      const createdDate = exp.created_at ? new Date(exp.created_at) : null;
+      const matchesDateRange = 
+        createdDate && 
+        (!startDate || createdDate >= startDate) && 
+        (!endDate || createdDate <= new Date(endDate.getTime() + 86400000)); // Add one day to include the end date fully
+      
+      return matchesSearch && matchesStatus && matchesDateRange;
     });
 
     const formatted: ExportItem[] = filtered.map(exp => ({
@@ -140,7 +161,8 @@ const Exports = () => {
       status: mapStatusToShipmentStatus(exp.status),
       departureDate: exp.departure_date ? new Date(exp.departure_date).toLocaleDateString() : 'Not scheduled',
       animalType: exp.animal_type,
-      country: exp.destination_lab.split(',').length > 1 ? exp.destination_lab.split(',')[1].trim() : 'Unknown'
+      country: exp.destination_lab.split(',').length > 1 ? exp.destination_lab.split(',')[1].trim() : 'Unknown',
+      createdAt: exp.created_at ? new Date(exp.created_at).toLocaleDateString() : 'Unknown'
     }));
     
     setFilteredExports(formatted);
@@ -150,7 +172,7 @@ const Exports = () => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [exports, searchQuery, statusFilter]);
+  }, [exports, searchQuery, statusFilter, startDate, endDate]);
   
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -163,6 +185,26 @@ const Exports = () => {
   );
   
   const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
+  
+  const handleDateRangeChange = (start: Date | undefined, end: Date | undefined) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+  
+  const formatDateRange = () => {
+    if (startDate && endDate) {
+      return `${format(startDate, 'MMM d, yyyy')} - ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    if (startDate) {
+      return `Since ${format(startDate, 'MMM d, yyyy')}`;
+    }
+    if (endDate) {
+      return `Until ${format(endDate, 'MMM d, yyyy')}`;
+    }
+    return '';
+  };
+  
+  const hasDateFilter = startDate || endDate;
   
   return (
     <div className="space-y-6">
@@ -183,10 +225,52 @@ const Exports = () => {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>Export Shipments</CardTitle>
-          <CardDescription>
-            View and manage all outgoing animal shipments
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div>
+              <CardTitle>Export Shipments</CardTitle>
+              <CardDescription>
+                View and manage all outgoing animal shipments
+              </CardDescription>
+            </div>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto gap-2">
+                  <Calendar className="h-4 w-4" />
+                  {hasDateFilter ? 
+                    <span className="truncate max-w-[150px]">{formatDateRange()}</span> : 
+                    "Filter by Date"
+                  }
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-4" align="end">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Filter by Creation Date</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Select a date range to filter exports
+                  </p>
+                  <DateRangeFilter onDateRangeChange={handleDateRangeChange} />
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          {hasDateFilter && (
+            <div className="mt-2 flex items-center">
+              <span className="text-sm bg-rose-100 text-rose-800 px-2 py-1 rounded-md flex items-center">
+                <Calendar className="h-3 w-3 mr-1" />
+                Filtered: {formatDateRange()}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-5 ml-1 px-1 text-xs"
+                  onClick={() => handleDateRangeChange(undefined, undefined)}
+                >
+                  Clear
+                </Button>
+              </span>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <ExportFilters 
@@ -196,6 +280,7 @@ const Exports = () => {
             setStatusFilter={setStatusFilter}
             toggleViewMode={toggleViewMode}
             viewMode={viewMode}
+            onDateRangeChange={handleDateRangeChange}
           />
           
           {loading ? (

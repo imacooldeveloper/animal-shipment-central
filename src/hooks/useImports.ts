@@ -36,6 +36,7 @@ export interface ImportItem {
   status: ShipmentStatus;
   arrivalDate: string;
   animalType: string;
+  createdAt: string; // Added for date filtering
 }
 
 // Items per page - use the constant
@@ -50,6 +51,10 @@ export const useImports = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filteredImports, setFilteredImports] = useState<ImportItem[]>([]);
+  
+  // Date range filters
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   // Use cards by default on mobile screens
   useEffect(() => {
@@ -104,7 +109,7 @@ export const useImports = () => {
 
   // Filter and format imports when data or filters change
   useEffect(() => {
-    // Filter imports based on search query and status filter
+    // Filter imports based on search query, status filter, and date range
     const filtered = imports.filter((imp) => {
       const matchesSearch = 
         (imp.import_number?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
@@ -115,7 +120,14 @@ export const useImports = () => {
       const shipmentStatus = mapStatusToShipmentStatus(imp.status);
       const matchesStatus = statusFilter === 'all' ? true : shipmentStatus === statusFilter;
       
-      return matchesSearch && matchesStatus;
+      // Date range filtering - check if import was created between start and end date
+      const createdDate = imp.created_at ? new Date(imp.created_at) : null;
+      const matchesDateRange = 
+        createdDate && 
+        (!startDate || createdDate >= startDate) && 
+        (!endDate || createdDate <= new Date(endDate.getTime() + 86400000)); // Add one day to include the end date fully
+
+      return matchesSearch && matchesStatus && matchesDateRange;
     });
 
     // Format imports for the components
@@ -125,7 +137,8 @@ export const useImports = () => {
       courier: imp.courier || 'Not specified',
       status: mapStatusToShipmentStatus(imp.status),
       arrivalDate: imp.arrival_date ? new Date(imp.arrival_date).toLocaleDateString() : 'Not scheduled',
-      animalType: imp.animal_type
+      animalType: imp.animal_type,
+      createdAt: imp.created_at ? new Date(imp.created_at).toLocaleDateString() : 'Unknown'
     }));
     
     setFilteredImports(formatted);
@@ -137,7 +150,7 @@ export const useImports = () => {
     if (currentPage !== 1) {
       setCurrentPage(1);
     }
-  }, [imports, searchQuery, statusFilter, currentPage]);
+  }, [imports, searchQuery, statusFilter, startDate, endDate, currentPage]);
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -153,6 +166,12 @@ export const useImports = () => {
 
   const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
 
+  // Handle date range changes
+  const handleDateRangeChange = (start: Date | undefined, end: Date | undefined) => {
+    setStartDate(start);
+    setEndDate(end);
+  };
+
   return {
     rawImports: imports,
     imports: paginatedImports,
@@ -167,6 +186,9 @@ export const useImports = () => {
     currentPage,
     totalPages,
     handlePageChange,
-    ITEMS_PER_PAGE
+    ITEMS_PER_PAGE,
+    startDate,
+    endDate,
+    handleDateRangeChange
   };
 };
