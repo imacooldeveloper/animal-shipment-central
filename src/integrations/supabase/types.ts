@@ -36,6 +36,7 @@ export type Database = {
       exports: {
         Row: {
           animal_type: string
+          checklist: string | null
           courier: string | null
           courier_account_number: string | null
           created_at: string | null
@@ -56,6 +57,7 @@ export type Database = {
         }
         Insert: {
           animal_type: string
+          checklist?: string | null
           courier?: string | null
           courier_account_number?: string | null
           created_at?: string | null
@@ -76,6 +78,7 @@ export type Database = {
         }
         Update: {
           animal_type?: string
+          checklist?: string | null
           courier?: string | null
           courier_account_number?: string | null
           created_at?: string | null
