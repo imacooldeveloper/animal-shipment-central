@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Clipboard, Trash } from 'lucide-react';
 import {
