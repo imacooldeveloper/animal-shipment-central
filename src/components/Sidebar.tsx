@@ -15,15 +15,13 @@ import {
   Menu,
   ArrowDownCircle,
   ArrowUpCircle,
-  Users,
-  Calendar,
-  BrainCircuit
+  PanelLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Sidebar = () => {
   const location = useLocation();
-  const { state, openMobile, setOpenMobile } = useSidebar();
+  const { state, openMobile, setOpenMobile, toggleSidebar } = useSidebar();
 
   const routes = [
     {

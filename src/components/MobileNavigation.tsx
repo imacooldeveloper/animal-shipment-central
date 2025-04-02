@@ -7,7 +7,8 @@ import {
   MessageSquare,
   ArrowDownCircle,
   ArrowUpCircle,
-  Menu
+  Menu,
+  PanelLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -21,7 +22,7 @@ import { useSidebar } from "@/components/ui/sidebar";
 const MobileNavigation = () => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
-  const { openMobile, setOpenMobile } = useSidebar();
+  const { openMobile, setOpenMobile, toggleSidebar } = useSidebar();
   
   const routes = [
     {
