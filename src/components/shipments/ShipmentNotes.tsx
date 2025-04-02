@@ -45,7 +45,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
         // If it parsed successfully but isn't an array, create a single note
         return [{
           id: crypto.randomUUID(),
-          content: notesInput,
+          content: String(notesInput),
           created_at: new Date().toISOString(),
           user_name: 'System'
         }];
@@ -54,7 +54,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       // If JSON parsing fails, treat as a single note
       return [{
         id: crypto.randomUUID(),
-        content: notesInput,
+        content: String(notesInput),
         created_at: new Date().toISOString(),
         user_name: 'System'
       }];

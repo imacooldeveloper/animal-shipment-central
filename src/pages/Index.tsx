@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import DashboardCards from "@/components/dashboard/DashboardCards";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Package, FileText, Truck, Ship } from "lucide-react";
+import { ArrowRight, Package, FileText, Truck, Ship, Clipboard, CalendarCheck } from "lucide-react";
 
 const Index = () => {
   // Sample counts for the dashboard cards, now including imports and exports
@@ -70,6 +70,43 @@ const Index = () => {
                 <Link to="/exports">
                   <Truck className="mr-2 h-4 w-4" />
                   Go to Exports
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+      
+      <section className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Additional Resources</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Completed Shipments</CardTitle>
+              <CardDescription>View all completed animal transfers</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/shipments?status=complete">
+                  <CalendarCheck className="mr-2 h-4 w-4" />
+                  View Completed Shipments
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Transfer Documents</CardTitle>
+              <CardDescription>Access health certificates and permits</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="w-full">
+                <Link to="/documents">
+                  <Clipboard className="mr-2 h-4 w-4" />
+                  View Documents
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
