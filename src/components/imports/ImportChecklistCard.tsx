@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
-import { ImportChecklist, ImportDatabaseItem } from '@/types';
+import { ImportChecklist } from '@/types';
 
 export const DEFAULT_CHECKLIST: ImportChecklist = {
   transferForms: false,
