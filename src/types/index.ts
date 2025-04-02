@@ -117,3 +117,44 @@ export interface ExportChecklist {
   pickupDate: boolean;
   packageReady: boolean;
 }
+
+// Add new database item interfaces to match the database schemas
+export interface ImportDatabaseItem {
+  id: string;
+  import_number: string;
+  sending_lab: string;
+  protocol_number?: string;
+  courier?: string;
+  courier_account_number?: string;
+  arrival_date?: string;
+  animal_type: string;
+  quantity: string;
+  status?: string;
+  notes?: string;
+  lab_contact_name?: string;
+  lab_contact_email?: string;
+  checklist?: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+export interface ExportDatabaseItem {
+  id: string;
+  export_number: string;
+  sending_lab: string;
+  destination_lab: string;
+  protocol_number?: string;
+  courier?: string;
+  courier_account_number?: string;
+  departure_date?: string;
+  animal_type: string;
+  quantity: string;
+  status?: string;
+  tracking_number?: string;
+  notes?: string;
+  lab_contact_name?: string;
+  lab_contact_email?: string;
+  checklist?: string;
+  created_at?: string;
+  created_by?: string;
+}

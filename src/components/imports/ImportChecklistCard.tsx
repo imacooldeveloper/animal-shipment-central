@@ -10,21 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ChecklistItem {
-  key: string;
-  label: string;
-  description: string;
-}
-
-export interface ImportChecklist {
-  transferForms: boolean;
-  healthCert: boolean;
-  importPermit: boolean;
-  courier: boolean;
-  animalReceipt: boolean;
-  facilitiesReady: boolean;
-}
+import { ImportChecklist, ImportDatabaseItem } from '@/types';
 
 export const DEFAULT_CHECKLIST: ImportChecklist = {
   transferForms: false,
@@ -35,8 +21,8 @@ export const DEFAULT_CHECKLIST: ImportChecklist = {
   facilitiesReady: false,
 };
 
-// Checklist items with descriptions that match the UI in the image
-export const IMPORT_CHECKLIST_ITEMS: ChecklistItem[] = [
+// Checklist items with descriptions that match the UI
+export const IMPORT_CHECKLIST_ITEMS = [
   {
     key: 'transferForms',
     label: 'Upload transfer forms',
@@ -77,11 +63,14 @@ interface ImportChecklistCardProps {
 
 const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChecklistCardProps) => {
   const [checklist, setChecklist] = useState<ImportChecklist>(initialChecklist);
+  const [updatingFromForm, setUpdatingFromForm] = useState(false);
   const queryClient = useQueryClient();
 
   // Update checklist mutation
   const updateChecklistMutation = useMutation({
     mutationFn: async (checklistData: ImportChecklist) => {
+      if (importId === "new-import") return true; // Skip API call for new imports
+      
       const { error } = await supabase
         .from('imports')
         .update({
@@ -93,8 +82,10 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['import', importId] });
-      toast.success('Checklist updated successfully');
+      if (importId !== "new-import") {
+        queryClient.invalidateQueries({ queryKey: ['import', importId] });
+        toast.success('Checklist updated successfully');
+      }
     },
     onError: (error) => {
       console.error('Error updating checklist:', error);
@@ -105,6 +96,7 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
   // Update checklist based on form data
   useEffect(() => {
     if (formData) {
+      setUpdatingFromForm(true);
       let updatedChecklist = { ...checklist };
       
       // Auto-update based on form fields
@@ -132,19 +124,30 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
         updatedChecklist.facilitiesReady = true;
       }
       
-      setChecklist(updatedChecklist);
+      // Only update state if there's an actual change to prevent re-renders
+      if (JSON.stringify(updatedChecklist) !== JSON.stringify(checklist)) {
+        setChecklist(updatedChecklist);
+      }
+      
+      // Reset the updating flag after a short delay
+      setTimeout(() => setUpdatingFromForm(false), 100);
     }
   }, [formData]);
 
   const updateChecklistItem = (key: keyof ImportChecklist, value: boolean) => {
-    setChecklist(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    // Only process manual updates if not currently updating from form data
+    if (!updatingFromForm) {
+      setChecklist(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    }
   };
 
   const saveChecklist = () => {
-    updateChecklistMutation.mutate(checklist);
+    if (!updatingFromForm) {
+      updateChecklistMutation.mutate(checklist);
+    }
   };
 
   const calculateProgress = () => {
@@ -198,7 +201,7 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
           <Button 
             className="w-full gap-2" 
             onClick={saveChecklist}
-            disabled={updateChecklistMutation.isPending}
+            disabled={updateChecklistMutation.isPending || updatingFromForm}
           >
             <Check className="h-4 w-4" />
             {updateChecklistMutation.isPending ? 'Saving...' : 'Save Changes'}

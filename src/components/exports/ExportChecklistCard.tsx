@@ -10,21 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
-
-export interface ChecklistItem {
-  key: string;
-  label: string;
-  description: string;
-}
-
-export interface ExportChecklist {
-  transferForms: boolean;
-  healthCert: boolean;
-  exportPermit: boolean;
-  courier: boolean;
-  pickupDate: boolean;
-  packageReady: boolean;
-}
+import { ExportChecklist, ExportDatabaseItem } from '@/types';
 
 export const DEFAULT_EXPORT_CHECKLIST: ExportChecklist = {
   transferForms: false,
@@ -36,7 +22,7 @@ export const DEFAULT_EXPORT_CHECKLIST: ExportChecklist = {
 };
 
 // Checklist items for export shipments
-export const EXPORT_CHECKLIST_ITEMS: ChecklistItem[] = [
+export const EXPORT_CHECKLIST_ITEMS = [
   {
     key: 'transferForms',
     label: 'Upload transfer forms',
@@ -77,11 +63,14 @@ interface ExportChecklistCardProps {
 
 const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChecklistCardProps) => {
   const [checklist, setChecklist] = useState<ExportChecklist>(initialChecklist);
+  const [updatingFromForm, setUpdatingFromForm] = useState(false);
   const queryClient = useQueryClient();
 
   // Update checklist mutation
   const updateChecklistMutation = useMutation({
     mutationFn: async (checklistData: ExportChecklist) => {
+      if (exportId === "new-export") return true; // Skip API call for new exports
+      
       const { error } = await supabase
         .from('exports')
         .update({
@@ -93,8 +82,10 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
       return true;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['export', exportId] });
-      toast.success('Checklist updated successfully');
+      if (exportId !== "new-export") {
+        queryClient.invalidateQueries({ queryKey: ['export', exportId] });
+        toast.success('Checklist updated successfully');
+      }
     },
     onError: (error) => {
       console.error('Error updating checklist:', error);
@@ -105,6 +96,7 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
   // Update checklist based on form data
   useEffect(() => {
     if (formData) {
+      setUpdatingFromForm(true);
       let updatedChecklist = { ...checklist };
       
       // Auto-update based on form fields
@@ -132,19 +124,30 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
         updatedChecklist.packageReady = true;
       }
       
-      setChecklist(updatedChecklist);
+      // Only update state if there's an actual change to prevent re-renders
+      if (JSON.stringify(updatedChecklist) !== JSON.stringify(checklist)) {
+        setChecklist(updatedChecklist);
+      }
+      
+      // Reset the updating flag after a short delay
+      setTimeout(() => setUpdatingFromForm(false), 100);
     }
   }, [formData]);
 
   const updateChecklistItem = (key: keyof ExportChecklist, value: boolean) => {
-    setChecklist(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    // Only process manual updates if not currently updating from form data
+    if (!updatingFromForm) {
+      setChecklist(prev => ({
+        ...prev,
+        [key]: value
+      }));
+    }
   };
 
   const saveChecklist = () => {
-    updateChecklistMutation.mutate(checklist);
+    if (!updatingFromForm) {
+      updateChecklistMutation.mutate(checklist);
+    }
   };
 
   const calculateProgress = () => {
@@ -198,7 +201,7 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
           <Button 
             className="w-full gap-2" 
             onClick={saveChecklist}
-            disabled={updateChecklistMutation.isPending}
+            disabled={updateChecklistMutation.isPending || updatingFromForm}
           >
             <Check className="h-4 w-4" />
             {updateChecklistMutation.isPending ? 'Saving...' : 'Save Changes'}
