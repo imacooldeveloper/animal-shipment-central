@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,15 @@ import ExportFilters from '@/components/exports/ExportFilters';
 import ExportTable from '@/components/exports/ExportTable';
 import ExportCards from '@/components/exports/ExportCards';
 import { mapStatusToShipmentStatus } from '@/lib/utils';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Interface for database items
 export interface ExportDatabaseItem {
@@ -30,7 +38,6 @@ export interface ExportDatabaseItem {
   quantity: string;
   created_at: string;
   sending_lab: string;
-  // Additional fields
   courier_account_number?: string | null;
   created_by?: string | null;
   lab_contact_email?: string | null;
@@ -52,12 +59,17 @@ export interface ExportItem {
   country: string;
 }
 
+const ITEMS_PER_PAGE = 15;
+
 const Exports = () => {
   const [exports, setExports] = useState<ExportDatabaseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filteredExports, setFilteredExports] = useState<ExportItem[]>([]);
   
   // Use cards by default on mobile screens
   useEffect(() => {
@@ -67,13 +79,10 @@ const Exports = () => {
       }
     };
     
-    // Set initial view mode based on screen size
     handleResize();
     
-    // Add event listener
     window.addEventListener('resize', handleResize);
     
-    // Clean up
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
@@ -110,30 +119,48 @@ const Exports = () => {
     fetchExports();
   }, []);
   
-  // Filter exports based on search query and status filter
-  const filteredExports = exports.filter((exp) => {
-    const matchesSearch = 
-      (exp.export_number?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (exp.destination_lab?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-      (exp.courier?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+  // Filter exports and update pagination whenever data or filters change
+  useEffect(() => {
+    const filtered = exports.filter((exp) => {
+      const matchesSearch = 
+        (exp.export_number?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (exp.destination_lab?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (exp.courier?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+        
+      const shipmentStatus = mapStatusToShipmentStatus(exp.status);
+      const matchesStatus = statusFilter === 'all' ? true : shipmentStatus === statusFilter;
       
-    // For filtering, convert the database status to our component status type
-    const shipmentStatus = mapStatusToShipmentStatus(exp.status);
-    const matchesStatus = statusFilter === 'all' ? true : shipmentStatus === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
 
-  // Format exports for the components
-  const formattedExports: ExportItem[] = filteredExports.map(exp => ({
-    id: exp.export_number,
-    destinationLab: exp.destination_lab,
-    courier: exp.courier || 'Not specified',
-    status: mapStatusToShipmentStatus(exp.status),
-    departureDate: exp.departure_date ? new Date(exp.departure_date).toLocaleDateString() : 'Not scheduled',
-    animalType: exp.animal_type,
-    country: exp.destination_lab.split(',').length > 1 ? exp.destination_lab.split(',')[1].trim() : 'Unknown'
-  }));
+    const formatted: ExportItem[] = filtered.map(exp => ({
+      id: exp.export_number,
+      destinationLab: exp.destination_lab,
+      courier: exp.courier || 'Not specified',
+      status: mapStatusToShipmentStatus(exp.status),
+      departureDate: exp.departure_date ? new Date(exp.departure_date).toLocaleDateString() : 'Not scheduled',
+      animalType: exp.animal_type,
+      country: exp.destination_lab.split(',').length > 1 ? exp.destination_lab.split(',')[1].trim() : 'Unknown'
+    }));
+    
+    setFilteredExports(formatted);
+    
+    setTotalPages(Math.max(1, Math.ceil(formatted.length / ITEMS_PER_PAGE)));
+    
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    }
+  }, [exports, searchQuery, statusFilter]);
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+  
+  const paginatedExports = filteredExports.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE, 
+    currentPage * ITEMS_PER_PAGE
+  );
   
   const toggleViewMode = () => setViewMode(viewMode === 'table' ? 'card' : 'table');
   
@@ -180,9 +207,80 @@ const Exports = () => {
               </div>
             </div>
           ) : viewMode === 'table' ? (
-            <ExportTable exports={formattedExports} />
+            <ExportTable exports={paginatedExports} />
           ) : (
-            <ExportCards exports={formattedExports} />
+            <ExportCards exports={paginatedExports} />
+          )}
+          
+          {filteredExports.length > ITEMS_PER_PAGE && (
+            <div className="mt-4">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  
+                  {currentPage > 3 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => handlePageChange(1)}>1</PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  {currentPage > 3 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  {currentPage > 1 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => handlePageChange(currentPage - 1)}>
+                        {currentPage - 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationLink isActive>{currentPage}</PaginationLink>
+                  </PaginationItem>
+                  
+                  {currentPage < totalPages && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => handlePageChange(currentPage + 1)}>
+                        {currentPage + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  {currentPage < totalPages - 2 && (
+                    <PaginationItem>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  )}
+                  
+                  {currentPage < totalPages - 1 && (
+                    <PaginationItem>
+                      <PaginationLink onClick={() => handlePageChange(totalPages)}>
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+              <div className="text-center text-sm text-muted-foreground mt-2">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredExports.length)} of {filteredExports.length} exports
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

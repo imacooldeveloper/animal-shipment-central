@@ -7,7 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { ShipmentNote } from '@/types';
+
+// Define the ShipmentNote interface
+interface ShipmentNote {
+  id: string;
+  content: string;
+  created_at: string;
+  user_name: string;
+}
 
 interface ShipmentNotesProps {
   shipmentId: string;
@@ -23,7 +30,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper function to safely parse notes - completely rewritten to avoid type recursion
+  // Helper function to safely parse notes
   function parseNotes(notesInput: ShipmentNote[] | string | null): ShipmentNote[] {
     // If null or undefined, return empty array
     if (!notesInput) {
@@ -35,30 +42,26 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       return notesInput;
     }
     
-    // At this point, notesInput must be a string
-    try {
-      const parsedData = JSON.parse(notesInput);
-      // Ensure the parsed data is an array
-      if (Array.isArray(parsedData)) {
-        return parsedData;
-      } else {
-        // If it parsed successfully but isn't an array, create a single note
+    // Try to parse as JSON string
+    if (typeof notesInput === 'string') {
+      try {
+        const parsed = JSON.parse(notesInput);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (e) {
+        // If parsing fails, create a single note from the string
         return [{
           id: crypto.randomUUID(),
-          content: String(notesInput),
+          content: notesInput,
           created_at: new Date().toISOString(),
           user_name: 'System'
         }];
       }
-    } catch (e) {
-      // If JSON parsing fails, treat as a single note
-      return [{
-        id: crypto.randomUUID(),
-        content: String(notesInput),
-        created_at: new Date().toISOString(),
-        user_name: 'System'
-      }];
     }
+    
+    // Fallback: return empty array
+    return [];
   }
 
   const handleAddNote = async () => {

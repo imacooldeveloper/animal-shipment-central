@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -34,7 +33,9 @@ import {
   Search,
   Truck,
   Loader2,
-  Box
+  Box,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
@@ -44,6 +45,15 @@ import { ImportDatabaseItem } from '@/hooks/useImports';
 import { ExportDatabaseItem } from '@/pages/Exports';
 import { mapStatusToShipmentStatus } from '@/lib/utils';
 import { toast } from "sonner";
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface CombinedShipment {
   id: string;
@@ -55,6 +65,9 @@ interface CombinedShipment {
   animalType: string;
   country: string;
 }
+
+// Updated to 15 items per page
+const ITEMS_PER_PAGE = 15;
 
 const Shipments = () => {
   const navigate = useNavigate();
@@ -70,6 +83,7 @@ const Shipments = () => {
   const [shipments, setShipments] = useState<CombinedShipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   
   // Fetch shipments from Supabase
   useEffect(() => {
@@ -158,21 +172,67 @@ const Shipments = () => {
     fetchShipments();
   }, []);
   
-  const filteredShipments = shipments.filter((shipment) => {
-    const matchesSearch = 
+  const [filteredShipments, setFilteredShipments] = useState<CombinedShipment[]>([]);
+  
+  // Update filtered shipments when filters change
+  useEffect(() => {
+    const matchesSearch = (shipment: CombinedShipment) =>
       shipment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       shipment.lab.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (shipment.courier?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       shipment.country.toLowerCase().includes(searchQuery.toLowerCase());
       
-    const matchesStatus = statusFilter === "all" ? true : shipment.status === statusFilter;
-    const matchesType = typeFilter === "all" ? true : shipment.type === typeFilter;
-    const matchesTab = activeTab === "all" ? true : 
-                       activeTab === "imports" ? shipment.type === "import" : 
-                       activeTab === "exports" ? shipment.type === "export" : true;
+    const matchesStatus = (shipment: CombinedShipment) =>
+      statusFilter === "all" ? true : shipment.status === statusFilter;
+      
+    const matchesType = (shipment: CombinedShipment) =>
+      typeFilter === "all" ? true : shipment.type === typeFilter;
+      
+    const matchesTab = (shipment: CombinedShipment) =>
+      activeTab === "all" ? true : 
+      activeTab === "imports" ? shipment.type === "import" : 
+      activeTab === "exports" ? shipment.type === "export" : true;
     
-    return matchesSearch && matchesStatus && matchesType && matchesTab;
-  });
+    const newFilteredShipments = shipments.filter(shipment => 
+      matchesSearch(shipment) && matchesStatus(shipment) && matchesType(shipment) && matchesTab(shipment)
+    );
+    
+    setFilteredShipments(newFilteredShipments);
+  }, [shipments, searchQuery, statusFilter, typeFilter, activeTab]);
+
+  // Update URL when statusFilter changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (statusFilter !== "all") {
+      params.set("status", statusFilter);
+    } else {
+      params.delete("status");
+    }
+    navigate(`${location.pathname}?${params.toString()}`, { replace: true });
+  }, [statusFilter, location.pathname, location.search]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setCurrentPage(1); // Reset to first page on tab change
+  };
+
+  // Handle status filter change
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1); // Reset to first page on status filter change
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Get paginated data for 15 items per page
+  const paginatedShipments = filteredShipments.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE, 
+    currentPage * ITEMS_PER_PAGE
+  );
   
   return (
     <div className="space-y-6">
@@ -213,7 +273,7 @@ const Shipments = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" onValueChange={setActiveTab}>
+          <Tabs defaultValue="all" onValueChange={handleTabChange}>
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Shipments</TabsTrigger>
               <TabsTrigger value="imports">Imports</TabsTrigger>
@@ -232,7 +292,7 @@ const Shipments = () => {
               </div>
               
               <div className="flex gap-2">
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
                   <SelectTrigger className="w-36">
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
@@ -287,19 +347,25 @@ const Shipments = () => {
             ) : (
               <>
                 <TabsContent value="all" className="m-0">
-                  {renderShipmentsList(filteredShipments, viewMode)}
+                  {renderShipmentsList(paginatedShipments, viewMode)}
                 </TabsContent>
                 
                 <TabsContent value="imports" className="m-0">
                   {renderShipmentsList(
-                    filteredShipments.filter(s => s.type === 'import'),
+                    filteredShipments.filter(s => s.type === 'import').slice(
+                      (currentPage - 1) * ITEMS_PER_PAGE,
+                      currentPage * ITEMS_PER_PAGE
+                    ),
                     viewMode
                   )}
                 </TabsContent>
                 
                 <TabsContent value="exports" className="m-0">
                   {renderShipmentsList(
-                    filteredShipments.filter(s => s.type === 'export'),
+                    filteredShipments.filter(s => s.type === 'export').slice(
+                      (currentPage - 1) * ITEMS_PER_PAGE,
+                      currentPage * ITEMS_PER_PAGE
+                    ),
                     viewMode
                   )}
                 </TabsContent>
@@ -308,6 +374,86 @@ const Shipments = () => {
           </Tabs>
         </CardContent>
       </Card>
+      
+      {/* Pagination */}
+      {filteredShipments.length > ITEMS_PER_PAGE && (
+        <div className="mt-4">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious 
+                  onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              
+              {/* First page */}
+              {currentPage > 3 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(1)}>1</PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis for many pages */}
+              {currentPage > 3 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              
+              {/* Previous page if not on page 1 */}
+              {currentPage > 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(currentPage - 1)}>
+                    {currentPage - 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Current page */}
+              <PaginationItem>
+                <PaginationLink isActive>{currentPage}</PaginationLink>
+              </PaginationItem>
+              
+              {/* Next page if not on last page */}
+              {/* Next page if not on last page */}
+              {currentPage < Math.ceil(filteredShipments.length / ITEMS_PER_PAGE) && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(currentPage + 1)}>
+                    {currentPage + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              {/* Ellipsis for many pages */}
+              {currentPage < Math.ceil(filteredShipments.length / ITEMS_PER_PAGE) - 2 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              
+              {/* Last page */}
+              {currentPage < Math.ceil(filteredShipments.length / ITEMS_PER_PAGE) - 1 && (
+                <PaginationItem>
+                  <PaginationLink onClick={() => handlePageChange(Math.ceil(filteredShipments.length / ITEMS_PER_PAGE))}>
+                    {Math.ceil(filteredShipments.length / ITEMS_PER_PAGE)}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              
+              <PaginationItem>
+                <PaginationNext 
+                  onClick={() => currentPage < Math.ceil(filteredShipments.length / ITEMS_PER_PAGE) && handlePageChange(currentPage + 1)}
+                  className={currentPage === Math.ceil(filteredShipments.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <div className="text-center text-sm text-muted-foreground mt-2">
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredShipments.length)} of {filteredShipments.length} shipments
+          </div>
+        </div>
+      )}
     </div>
   );
 };
