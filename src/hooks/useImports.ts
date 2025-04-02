@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ShipmentStatus } from '@/types';
 import { toast } from 'sonner';
 import { mapStatusToShipmentStatus } from '@/lib/utils';
+import { PAGINATION_CONSTANTS } from '@/lib/constants';
 
 // Interface for database items
 export interface ImportDatabaseItem {
@@ -37,8 +38,8 @@ export interface ImportItem {
   animalType: string;
 }
 
-// Items per page - 15 per page
-const ITEMS_PER_PAGE = 15;
+// Items per page - use the constant
+const ITEMS_PER_PAGE = PAGINATION_CONSTANTS.ITEMS_PER_PAGE;
 
 export const useImports = () => {
   const [imports, setImports] = useState<ImportDatabaseItem[]>([]);

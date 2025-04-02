@@ -12,6 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { PAGINATION_CONSTANTS } from "@/lib/constants";
 
 const Imports = () => {
   const isMobile = useIsMobile();

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FileText, Send, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,14 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-// Define the ShipmentNote interface
-interface ShipmentNote {
-  id: string;
-  content: string;
-  created_at: string;
-  user_name: string;
-}
+import { ShipmentNote } from '@/types';
+import { parseNotesData, formatNoteDate } from '@/lib/note-utils';
 
 interface ShipmentNotesProps {
   shipmentId: string;
@@ -23,46 +17,17 @@ interface ShipmentNotesProps {
 }
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
-  // Parse notes if they are a string, otherwise use them as is
-  const parsedInitialNotes = parseNotes(existingNotes);
-  
-  const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
+  // Use the utility function to parse notes
+  const [notes, setNotes] = useState<ShipmentNote[]>([]);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper function to safely parse notes
-  function parseNotes(notesInput: ShipmentNote[] | string | null): ShipmentNote[] {
-    // If null or undefined, return empty array
-    if (!notesInput) {
-      return [];
-    }
-    
-    // If already an array, return it directly
-    if (Array.isArray(notesInput)) {
-      return notesInput;
-    }
-    
-    // Try to parse as JSON string
-    if (typeof notesInput === 'string') {
-      try {
-        const parsed = JSON.parse(notesInput);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch (e) {
-        // If parsing fails, create a single note from the string
-        return [{
-          id: crypto.randomUUID(),
-          content: notesInput,
-          created_at: new Date().toISOString(),
-          user_name: 'System'
-        }];
-      }
-    }
-    
-    // Fallback: return empty array
-    return [];
-  }
+  // Initialize notes from props
+  useEffect(() => {
+    console.log(`Initializing notes for ${shipmentType} ${shipmentId}`, existingNotes);
+    const parsedNotes = parseNotesData(existingNotes);
+    setNotes(parsedNotes);
+  }, [existingNotes, shipmentId, shipmentType]);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -85,6 +50,8 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       // We'll store all notes as a JSON string in the notes field
       const updatedNotes = [...notes, noteObj];
       
+      console.log(`Adding new note to ${shipmentType} ${shipmentId}`, updatedNotes);
+      
       // Update the database
       const { error } = await supabase
         .from(tableName)
@@ -105,21 +72,6 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       toast.error(`Failed to add note: ${error.message}`);
     } finally {
       setSubmitting(false);
-    }
-  };
-  
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: true
-      });
-    } catch (e) {
-      return dateString;
     }
   };
 
@@ -145,7 +97,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
                       </span>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {formatDate(note.created_at)}
+                      {formatNoteDate(note.created_at)}
                     </span>
                   </div>
                   <p className="whitespace-pre-wrap text-sm">{note.content}</p>
