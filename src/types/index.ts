@@ -158,3 +158,14 @@ export interface ExportDatabaseItem {
   created_at?: string;
   created_by?: string;
 }
+
+// Dashboard type for displaying shipments on dashboard
+export interface DashboardShipment {
+  id: string;
+  type: 'import' | 'export';
+  country: string;
+  lab: string;
+  animalType: string;
+  status: ShipmentStatus;
+  lastUpdated: string;
+}

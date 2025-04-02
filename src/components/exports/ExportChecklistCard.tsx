@@ -75,7 +75,7 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
       if (JSON.stringify(newChecklist) !== JSON.stringify(checklist)) {
         setChecklist(newChecklist);
       }
-    }, 1000); // 1 second delay
+    }, 2000); // Increase to 2 seconds to reduce likelihood of pushing out of view
     
     return () => clearTimeout(timer);
   }, [formData, checklist]);

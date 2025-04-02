@@ -9,47 +9,31 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FileText, Plus, Search } from 'lucide-react';
-import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
+import { Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { ImportDatabaseItem } from '@/hooks/useImports';
+import { ImportDatabaseItem, ExportDatabaseItem, DashboardShipment, ShipmentStatus } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { mapStatusToShipmentStatus } from '@/lib/utils';
 import { toast } from 'sonner';
 
-// Unified type for dashboard display
-interface DashboardShipment {
-  id: string;
-  type: 'import' | 'export';
-  country: string;
-  lab: string;
-  animalType: string;
-  status: string;
-  lastUpdated: string;
-}
+// Import the smaller dashboard components
+import DashboardCards from '@/components/dashboard/DashboardCards';
+import ShipmentFilters from '@/components/dashboard/ShipmentFilters';
+import ShipmentTable from '@/components/dashboard/ShipmentTable';
 
 const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [filteredShipments, setFilteredShipments] = useState<DashboardShipment[]>([]);
+  const [shipmentCounts, setShipmentCounts] = useState({
+    total: 0,
+    draft: 0,
+    progress: 0,
+    complete: 0
+  });
 
-  // Fetch imports and exports using React Query
+  // Fetch imports using React Query
   const importsQuery = useQuery({
     queryKey: ['imports'],
     queryFn: async () => {
@@ -63,6 +47,7 @@ const Dashboard = () => {
     }
   });
 
+  // Fetch exports using React Query
   const exportsQuery = useQuery({
     queryKey: ['exports'],
     queryFn: async () => {
@@ -72,7 +57,7 @@ const Dashboard = () => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as any[];
+      return data as ExportDatabaseItem[];
     }
   });
 
@@ -85,51 +70,53 @@ const Dashboard = () => {
       id: item.import_number,
       type: 'import' as const,
       country: 'N/A', // Could be enhanced with country data
-      lab: item.sending_lab,
-      animalType: item.animal_type,
-      status: mapStatusToShipmentStatus(item.status),
-      lastUpdated: new Date(item.created_at).toLocaleDateString()
+      lab: item.sending_lab || 'Unknown',
+      animalType: item.animal_type || 'Unknown',
+      status: mapStatusToShipmentStatus(item.status) as ShipmentStatus,
+      lastUpdated: item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown'
     }));
     
     const formattedExports = exports.map(item => ({
       id: item.export_number,
       type: 'export' as const,
       country: 'N/A', // Could be enhanced with country data
-      lab: item.destination_lab,
-      animalType: item.animal_type,
-      status: mapStatusToShipmentStatus(item.status),
-      lastUpdated: new Date(item.created_at).toLocaleDateString()
+      lab: item.destination_lab || 'Unknown',
+      animalType: item.animal_type || 'Unknown',
+      status: mapStatusToShipmentStatus(item.status) as ShipmentStatus,
+      lastUpdated: item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Unknown'
     }));
     
     return [...formattedImports, ...formattedExports];
   };
 
-  // Get all shipments and apply filters
-  const allShipments = formatDashboardData();
-  
-  const filteredShipments = allShipments.filter(shipment => {
-    const matchesSearch = searchTerm === '' || 
-      shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shipment.lab.toLowerCase().includes(searchTerm.toLowerCase());
+  // Update filtered shipments and counts when data or filters change
+  useEffect(() => {
+    const allShipments = formatDashboardData();
     
-    const matchesStatus = statusFilter === 'all' || shipment.status === statusFilter;
-    const matchesType = typeFilter === 'all' || shipment.type === typeFilter;
+    // Apply filters
+    const filtered = allShipments.filter(shipment => {
+      const matchesSearch = searchTerm === '' || 
+        shipment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shipment.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        shipment.lab.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || shipment.status === statusFilter;
+      const matchesType = typeFilter === 'all' || shipment.type === typeFilter;
+      
+      return matchesSearch && matchesStatus && matchesType;
+    });
     
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // Get counts for dashboard cards
-  const getShipmentCounts = () => {
-    return {
+    setFilteredShipments(filtered);
+    
+    // Update counts
+    setShipmentCounts({
       total: allShipments.length,
       draft: allShipments.filter(s => s.status === 'draft').length,
       progress: allShipments.filter(s => s.status === 'progress').length,
       complete: allShipments.filter(s => s.status === 'complete').length,
-    };
-  };
+    });
+  }, [importsQuery.data, exportsQuery.data, searchTerm, statusFilter, typeFilter]);
 
-  const counts = getShipmentCounts();
   const isLoading = importsQuery.isLoading || exportsQuery.isLoading;
   const isError = importsQuery.isError || exportsQuery.isError;
 
@@ -152,40 +139,7 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Shipments</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{counts.total}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Draft</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{counts.draft}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">In Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{counts.progress}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Complete</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{counts.complete}</div>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardCards counts={shipmentCounts} />
 
       <Card>
         <CardHeader>
@@ -193,96 +147,19 @@ const Dashboard = () => {
           <CardDescription>Manage and track your animal shipments</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by ID or lab..."
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={setStatusFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="progress">In Progress</SelectItem>
-                <SelectItem value="complete">Complete</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={typeFilter}
-              onValueChange={setTypeFilter}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="import">Import</SelectItem>
-                <SelectItem value="export">Export</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <ShipmentFilters 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            typeFilter={typeFilter}
+            setTypeFilter={setTypeFilter}
+          />
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Shipment ID</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Lab</TableHead>
-                  <TableHead>Animal Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      Loading shipments...
-                    </TableCell>
-                  </TableRow>
-                ) : filteredShipments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
-                      No shipments found.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredShipments.map((shipment) => (
-                    <TableRow key={shipment.id}>
-                      <TableCell className="font-medium">{shipment.id}</TableCell>
-                      <TableCell className="capitalize">{shipment.type}</TableCell>
-                      <TableCell>{shipment.lab}</TableCell>
-                      <TableCell>{shipment.animalType}</TableCell>
-                      <TableCell>
-                        <ShipmentStatusBadge status={shipment.status} />
-                      </TableCell>
-                      <TableCell>{shipment.lastUpdated}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link to={`/${shipment.type}s/${shipment.id}`}>
-                            <FileText className="h-4 w-4 mr-2" />
-                            View
-                          </Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <ShipmentTable 
+            shipments={filteredShipments} 
+            isLoading={isLoading} 
+          />
         </CardContent>
       </Card>
     </div>

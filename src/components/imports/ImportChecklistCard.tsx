@@ -43,30 +43,42 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
   const [progress, setProgress] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   
-  // Prevent auto-update while typing by using a delay
+  // Prevent auto-update while typing by using a delay and batching updates
   useEffect(() => {
     if (!formData) return;
     
-    // Use setTimeout to prevent rapid changes while typing
+    // Use setTimeout with a longer delay to prevent rapid changes causing UI jumps
     const timer = setTimeout(() => {
+      let hasChanges = false;
       const newChecklist = { ...checklist };
       
       // Only update if values exist and are different from current state
-      if (formData.sendingLab && !checklist.transferForms) newChecklist.transferForms = true;
-      if (formData.courier && !checklist.courier) newChecklist.courier = true;
-      if (formData.arrivalDate && !checklist.animalReceipt) newChecklist.animalReceipt = true;
+      if (formData.sendingLab && !checklist.transferForms) {
+        newChecklist.transferForms = true;
+        hasChanges = true;
+      }
+      if (formData.courier && !checklist.courier) {
+        newChecklist.courier = true;
+        hasChanges = true;
+      }
+      if (formData.arrivalDate && !checklist.animalReceipt) {
+        newChecklist.animalReceipt = true;
+        hasChanges = true;
+      }
       if ((formData.labContactEmail && formData.labContactName) && !checklist.importPermit) {
         newChecklist.importPermit = true;
+        hasChanges = true;
       }
       if ((formData.animalType && formData.quantity) && !checklist.healthCert) {
         newChecklist.healthCert = true;
+        hasChanges = true;
       }
       
       // Only update state if changes were made to avoid unnecessary re-renders
-      if (JSON.stringify(newChecklist) !== JSON.stringify(checklist)) {
+      if (hasChanges) {
         setChecklist(newChecklist);
       }
-    }, 1000); // 1 second delay
+    }, 2000); // Increase to 2 seconds to further reduce likelihood of pushing out of view
     
     return () => clearTimeout(timer);
   }, [formData, checklist]);
