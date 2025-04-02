@@ -24,19 +24,19 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   const [submitting, setSubmitting] = useState(false);
 
   // Helper function to safely parse notes
-  function parseNotes(notesData: ShipmentNote[] | string | null): ShipmentNote[] {
-    if (!notesData) return [];
+  function parseNotes(notes: ShipmentNote[] | string | null): ShipmentNote[] {
+    if (!notes) return [];
     
-    if (Array.isArray(notesData)) {
-      return notesData;
+    if (Array.isArray(notes)) {
+      return notes;
     }
     
     try {
-      const parsed = JSON.parse(notesData as string);
-      return Array.isArray(parsed) ? parsed : [createSingleNote(notesData as string)];
+      const parsed = JSON.parse(notes as string);
+      return Array.isArray(parsed) ? parsed : [createSingleNote(notes as string)];
     } catch (e) {
       // If parsing fails, treat as a single note
-      return notesData ? [createSingleNote(notesData as string)] : [];
+      return notes ? [createSingleNote(notes as string)] : [];
     }
   }
   

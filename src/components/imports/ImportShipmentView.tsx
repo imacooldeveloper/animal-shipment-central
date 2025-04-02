@@ -1,5 +1,5 @@
 
-import { Calendar, Truck, Bookmark, FileText, Send, User, Mail } from 'lucide-react';
+import { Calendar, Truck, Bookmark, User, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
 import { Separator } from "@/components/ui/separator";
@@ -121,23 +121,6 @@ const ImportShipmentView = ({ importData }: ImportShipmentViewProps) => {
               )}
             </div>
           </div>
-          
-          {importData.notes && (
-            <>
-              <Separator className="my-6" />
-              <div className="space-y-2">
-                <div className="flex items-start">
-                  <FileText className="h-5 w-5 text-muted-foreground mr-2 mt-0.5" />
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Notes</h3>
-                    <div className="bg-muted/50 p-4 rounded-md">
-                      <p className="whitespace-pre-wrap">{importData.notes}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
         </CardContent>
       </Card>
     </div>
