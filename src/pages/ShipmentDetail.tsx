@@ -109,13 +109,22 @@ const ShipmentDetail = () => {
           />
         </div>
       ) : (
-        <ShipmentDetailContent
-          shipment={shipment}
-          checklist={checklist!}
-          updateChecklist={updateChecklist}
-          onSaveChanges={saveChanges}
-          calculateProgress={calculateProgress}
-        />
+        <div className="space-y-6">
+          <ShipmentDetailContent
+            shipment={shipment}
+            checklist={checklist!}
+            updateChecklist={updateChecklist}
+            onSaveChanges={saveChanges}
+            calculateProgress={calculateProgress}
+          />
+          {shipment.id && (
+            <ShipmentNotes 
+              shipmentId={shipment.id} 
+              shipmentType={shipment.type} 
+              existingNotes={[]}
+            />
+          )}
+        </div>
       )}
     </div>
   );

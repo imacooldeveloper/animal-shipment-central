@@ -7,32 +7,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ShipmentNote } from '@/types';
 
-// Define a standalone interface for note objects
-interface NoteItem {
-  id: string;
-  content: string;
-  created_at: string;
-  user_name?: string;
-}
-
-// Use a union type for the existingNotes prop to avoid recursive type definitions
 interface ShipmentNotesProps {
   shipmentId: string;
   shipmentType: 'import' | 'export';
-  existingNotes: NoteItem[] | string | null;
+  existingNotes: ShipmentNote[] | string | null;
 }
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
   const parsedInitialNotes = parseNotes(existingNotes);
   
-  const [notes, setNotes] = useState<NoteItem[]>(parsedInitialNotes);
+  const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Helper function to safely parse notes
-  function parseNotes(notesData: NoteItem[] | string | null): NoteItem[] {
+  function parseNotes(notesData: ShipmentNote[] | string | null): ShipmentNote[] {
     if (!notesData) return [];
     
     if (Array.isArray(notesData)) {
@@ -49,7 +41,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   }
   
   // Helper function to create a single note from string content
-  function createSingleNote(content: string): NoteItem {
+  function createSingleNote(content: string): ShipmentNote {
     return {
       id: crypto.randomUUID(),
       content: content,
@@ -69,7 +61,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       const idField = shipmentType === 'import' ? 'import_number' : 'export_number';
       
       // Create a new note object
-      const noteObj: NoteItem = {
+      const noteObj: ShipmentNote = {
         id: crypto.randomUUID(),
         content: newNote,
         created_at: new Date().toISOString(),
