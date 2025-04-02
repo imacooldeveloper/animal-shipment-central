@@ -19,7 +19,14 @@ import Exports from "./pages/Exports";
 import Shipments from "./pages/Shipments";
 import NewShipment from "./pages/NewShipment";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
