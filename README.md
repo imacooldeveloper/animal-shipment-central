@@ -1,73 +1,105 @@
-# Welcome to your Lovable project
 
-## Project info
+# Vivarium SOP - Shipping Operations Platform
 
-**URL**: https://lovable.dev/projects/098f2f68-d141-48a2-8d40-294e1103ad07
+## Project Overview
 
-## How can I edit this code?
+Vivarium SOP is a comprehensive shipping operations platform designed to efficiently manage and track animal shipments for laboratories and research facilities. The platform provides a seamless way to manage both import and export shipments, track progress, and maintain detailed records of animal transfers.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- **Dashboard**: View key metrics and recent shipments at a glance
+- **Import Management**: Track incoming animal shipments with detailed information
+- **Export Management**: Manage outgoing animal shipments with comprehensive tracking
+- **Shipment Details**: Access detailed views of each shipment with progress tracking
+- **Notes System**: Add and track notes for each shipment for better communication
+- **Checklist Management**: Track completion status of required steps for each shipment
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/098f2f68-d141-48a2-8d40-294e1103ad07) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
+## Technical Stack
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend Framework**: React with TypeScript
+- **UI Components**: shadcn/ui (built on Radix UI)
+- **Styling**: Tailwind CSS
+- **State Management**: React Query for server state, React hooks for local state
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Planned for future implementation
+- **Deployment**: Hosted on Lovable platform
 
-## How can I deploy this project?
+## Getting Started
 
-Simply open [Lovable](https://lovable.dev/projects/098f2f68-d141-48a2-8d40-294e1103ad07) and click on Share -> Publish.
+### Prerequisites
 
-## Can I connect a custom domain to my Lovable project?
+- Node.js & npm - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-Yes it is!
+### Installation
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+1. Clone the repository:
+```sh
+git clone <YOUR_GIT_URL>
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+2. Navigate to the project directory:
+```sh
+cd <YOUR_PROJECT_NAME>
+```
+
+3. Install dependencies:
+```sh
+npm i
+```
+
+4. Start the development server:
+```sh
+npm run dev
+```
+
+## Project Structure
+
+- `/src/components`: UI components
+  - `/ui`: shadcn/ui base components
+  - `/imports`: Components related to import shipments
+  - `/exports`: Components related to export shipments
+  - `/shipments`: Shared components for all shipment types
+- `/src/hooks`: Custom React hooks
+  - `/import`: Hooks for import-related functionality
+  - `/export`: Hooks for export-related functionality
+  - `/shipment`: Shared hooks for all shipment types
+- `/src/pages`: Page components
+- `/src/integrations`: Integration with external services
+
+## Database Schema
+
+The application uses a Supabase PostgreSQL database with the following main tables:
+
+- **imports**: Store information about incoming animal shipments
+- **exports**: Store information about outgoing animal shipments
+- **message_templates**: Store templates for automated messages
+
+Each shipment record includes fields for tracking essential details such as:
+- Shipping numbers
+- Lab information
+- Animal details
+- Courier information
+- Dates and statuses
+- Notes and checklists
+
+## Future Enhancements
+
+- User authentication and role-based access control
+- Email notifications for shipment updates
+- Document attachments for shipments
+- Advanced reporting and analytics
+- Mobile application support
+
+## Deployment
+
+The application can be deployed using the Lovable platform by clicking on Share -> Publish.
+
+## Custom Domain Setup
+
+To connect a custom domain, navigate to Project > Settings > Domains in Lovable and click Connect Domain.
+
+## License
+
+This project is proprietary software. All rights reserved.

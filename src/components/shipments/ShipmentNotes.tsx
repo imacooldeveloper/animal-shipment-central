@@ -8,8 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define the Note type explicitly to avoid recursive type issues
-interface Note {
+// Define a standalone interface for notes to avoid recursive type issues
+interface ShipmentNote {
   id: string;
   content: string;
   created_at: string;
@@ -19,19 +19,19 @@ interface Note {
 interface ShipmentNotesProps {
   shipmentId: string;
   shipmentType: 'import' | 'export';
-  existingNotes: Note[] | string;
+  existingNotes: ShipmentNote[] | string;
 }
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
   const parsedInitialNotes = parseNotes(existingNotes);
   
-  const [notes, setNotes] = useState<Note[]>(parsedInitialNotes);
+  const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Helper function to safely parse notes
-  function parseNotes(notesData: string | Note[]): Note[] {
+  function parseNotes(notesData: string | ShipmentNote[]): ShipmentNote[] {
     if (Array.isArray(notesData)) {
       return notesData;
     }
@@ -48,7 +48,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   }
   
   // Helper function to create a single note from string content
-  function createSingleNote(content: string): Note {
+  function createSingleNote(content: string): ShipmentNote {
     return {
       id: crypto.randomUUID(),
       content: content,
@@ -68,7 +68,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       const idField = shipmentType === 'import' ? 'import_number' : 'export_number';
       
       // Create a new note object
-      const noteObj: Note = {
+      const noteObj: ShipmentNote = {
         id: crypto.randomUUID(),
         content: newNote,
         created_at: new Date().toISOString(),
