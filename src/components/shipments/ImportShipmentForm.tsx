@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,20 +55,29 @@ const ImportShipmentForm = ({
   });
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Watch for form changes to update parent component
   useEffect(() => {
     const subscription = form.watch((value) => {
       if (onSubmit && typeof onSubmit === 'function') {
-        // This is a hack to get form values for the checklist preview
-        const currentValues = form.getValues();
-        if (currentValues.sendingLab) {
-          onSubmit(currentValues);
-        }
+        if (debounceTimer) clearTimeout(debounceTimer);
+        
+        const timer = setTimeout(() => {
+          const currentValues = form.getValues();
+          if (currentValues.sendingLab) {
+            onSubmit(currentValues);
+          }
+        }, 500);
+        
+        setDebounceTimer(timer);
       }
     });
-    return () => subscription.unsubscribe();
-  }, [form, onSubmit]);
+    
+    return () => {
+      subscription.unsubscribe();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [form, onSubmit, debounceTimer]);
 
   const handleFormSubmit = (values: ImportFormValues) => {
     let finalCourier = values.courier;
@@ -90,6 +98,19 @@ const ImportShipmentForm = ({
       type: 'import'
     } as ImportShipment);
   };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (document.activeElement?.tagName === 'INPUT') {
+        window.scrollTo(window.scrollX, window.scrollY);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
     <FormProvider {...form}>

@@ -1,4 +1,3 @@
-
 import { Calendar, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { z } from "zod";
@@ -33,6 +32,15 @@ import { animalTypes } from '../form-utils/constants';
 const ImportDetailsFields = () => {
   const form = useFormContext();
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTimeout(() => {
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.tagName === 'INPUT') {
+        window.scrollTo(window.scrollX, window.scrollY);
+      }
+    }, 0);
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <FormField
@@ -59,7 +67,10 @@ const ImportDetailsFields = () => {
           <FormItem>
             <FormLabel>Protocol Number</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Enter protocol number for billing/reference" />
+              <Input {...field} placeholder="Enter protocol number for billing/reference" onChange={(e) => {
+                field.onChange(e);
+                handleInputChange(e);
+              }} />
             </FormControl>
             <FormDescription>
               Used for charging the lab or tracking
@@ -76,7 +87,14 @@ const ImportDetailsFields = () => {
           <FormItem>
             <FormLabel>Sending Lab / Institution</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="Tokyo Research Center" />
+              <Input 
+                {...field} 
+                placeholder="Tokyo Research Center" 
+                onChange={(e) => {
+                  field.onChange(e);
+                  handleInputChange(e);
+                }}
+              />
             </FormControl>
             <FormDescription>
               Where the animals are coming from
@@ -162,7 +180,14 @@ const ImportDetailsFields = () => {
           <FormItem>
             <FormLabel>Quantity and Strain</FormLabel>
             <FormControl>
-              <Input {...field} placeholder="20 C57BL/6 Males" />
+              <Input 
+                {...field} 
+                placeholder="20 C57BL/6 Males" 
+                onChange={(e) => {
+                  field.onChange(e);
+                  handleInputChange(e);
+                }}
+              />
             </FormControl>
             <FormDescription>
               Number and details of animals

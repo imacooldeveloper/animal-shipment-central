@@ -59,7 +59,7 @@ const Sidebar = () => {
     <SidebarComponent>
       <SidebarHeader className="flex justify-between items-center">
         <div className="flex items-center gap-2 px-4 overflow-hidden">
-          <span className="font-bold text-xl text-rose-500">AnimalFlow</span>
+          <span className="font-bold text-xl text-rose-500">Import Export System</span>
         </div>
         <SidebarTrigger>
           <Menu className="h-5 w-5" />

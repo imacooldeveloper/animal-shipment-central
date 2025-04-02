@@ -52,6 +52,16 @@
   body {
     @apply bg-gray-50 text-foreground;
   }
+  
+  /* Fix for form inputs triggering scroll jumps */
+  input:focus {
+    scroll-margin-bottom: 100vh;
+  }
+  
+  /* Prevent scroll during form interactions */
+  form:has(input:focus) {
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer components {
