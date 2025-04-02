@@ -8,35 +8,36 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-// Define a standalone interface for notes to avoid recursive type issues
-interface ShipmentNote {
+// Define a standalone interface for note objects
+interface NoteItem {
   id: string;
   content: string;
   created_at: string;
   user_name?: string;
 }
 
+// Use a union type for the existingNotes prop to avoid recursive type definitions
 interface ShipmentNotesProps {
   shipmentId: string;
   shipmentType: 'import' | 'export';
-  existingNotes: ShipmentNote[] | string;
+  existingNotes: NoteItem[] | string | null;
 }
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
   const parsedInitialNotes = parseNotes(existingNotes);
   
-  const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
+  const [notes, setNotes] = useState<NoteItem[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Helper function to safely parse notes
-  function parseNotes(notesData: string | ShipmentNote[]): ShipmentNote[] {
+  function parseNotes(notesData: NoteItem[] | string | null): NoteItem[] {
+    if (!notesData) return [];
+    
     if (Array.isArray(notesData)) {
       return notesData;
     }
-    
-    if (!notesData) return [];
     
     try {
       const parsed = JSON.parse(notesData as string);
@@ -48,7 +49,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   }
   
   // Helper function to create a single note from string content
-  function createSingleNote(content: string): ShipmentNote {
+  function createSingleNote(content: string): NoteItem {
     return {
       id: crypto.randomUUID(),
       content: content,
@@ -68,7 +69,7 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       const idField = shipmentType === 'import' ? 'import_number' : 'export_number';
       
       // Create a new note object
-      const noteObj: ShipmentNote = {
+      const noteObj: NoteItem = {
         id: crypto.randomUUID(),
         content: newNote,
         created_at: new Date().toISOString(),

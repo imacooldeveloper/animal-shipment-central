@@ -1,17 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Shipment } from '@/types';
+import { Shipment, ShipmentNote } from '@/types';
 import { ImportDatabaseItem } from '@/hooks/useImports';
 import { ExportDatabaseItem } from '@/pages/Exports';
-
-// Define a standalone interface for notes to avoid recursive type issues
-export interface ShipmentNote {
-  id: string;
-  content: string;
-  created_at: string;
-  user_name?: string;
-}
 
 export interface UseShipmentDataReturn {
   shipment: Shipment | null;

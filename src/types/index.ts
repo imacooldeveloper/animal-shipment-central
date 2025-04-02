@@ -1,4 +1,3 @@
-
 export type ShipmentStatus = 'draft' | 'progress' | 'complete';
 
 export interface Shipment {
@@ -118,7 +117,13 @@ export interface ExportChecklist {
   packageReady: boolean;
 }
 
-// Add new database item interfaces to match the database schemas
+export interface ShipmentNote {
+  id: string;
+  content: string;
+  created_at: string;
+  user_name?: string;
+}
+
 export interface ImportDatabaseItem {
   id: string;
   import_number: string;
@@ -160,7 +165,6 @@ export interface ExportDatabaseItem {
   is_international?: boolean;
 }
 
-// Dashboard type for displaying shipments on dashboard
 export interface DashboardShipment {
   id: string;
   type: 'import' | 'export';

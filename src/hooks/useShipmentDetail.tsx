@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ImportDatabaseItem } from '@/hooks/useImports';
 import { ExportDatabaseItem } from '@/pages/Exports';
-import { Shipment } from '@/types';
+import { Shipment, ShipmentNote } from '@/types';
 
 interface Note {
   id: string;
@@ -25,7 +24,7 @@ interface UseShipmentDetailReturn {
   error: string | null;
   importData: ImportDatabaseItem | null;
   exportData: ExportDatabaseItem | null;
-  notes: Note[] | string;
+  notes: ShipmentNote[] | string;
   updateChecklist: (key: keyof Shipment['checklist'], value: boolean) => Promise<void>;
   saveChanges: () => void;
   calculateProgress: () => number;
@@ -41,9 +40,8 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
   const [error, setError] = useState<string | null>(null);
   const [importData, setImportData] = useState<ImportDatabaseItem | null>(null);
   const [exportData, setExportData] = useState<ExportDatabaseItem | null>(null);
-  const [notes, setNotes] = useState<Note[] | string>([]);
+  const [notes, setNotes] = useState<ShipmentNote[] | string>([]);
   
-  // Determine if this is an import or export by checking the ID format
   const isImport = id?.startsWith('IMP') ?? false;
   const isExport = id?.startsWith('EXP') ?? false;
   
@@ -58,7 +56,6 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
         console.log(`Fetching shipment details for ID: ${id}`);
         
         if (isImport) {
-          // Fetch import details
           const { data, error } = await supabase
             .from('imports')
             .select('*')
@@ -79,21 +76,18 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
           
           setImportData(data);
           
-          // Handle notes
           if (data.notes) {
             setNotes(data.notes);
           }
           
-          // Parse checklist if it exists
           const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
           
-          // Map the database data to our Shipment type
           setShipment({
             id: data.import_number,
             type: 'import',
             status: data.status === 'complete' ? 'complete' : 
                    data.status === 'in-progress' ? 'progress' : 'draft',
-            country: 'N/A', // Use a more meaningful value if available
+            country: 'N/A',
             lastUpdated: new Date(data.created_at).toLocaleDateString(),
             animalType: data.animal_type,
             lab: data.sending_lab,
@@ -122,7 +116,6 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
             facilitiesReady: false
           });
         } else if (isExport) {
-          // Fetch export details
           const { data, error } = await supabase
             .from('exports')
             .select('*')
@@ -143,15 +136,12 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
           
           setExportData(data);
           
-          // Handle notes
           if (data.notes) {
             setNotes(data.notes);
           }
           
-          // Parse checklist if it exists
           const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
           
-          // Map the database data to our Shipment type
           setShipment({
             id: data.export_number,
             type: 'export',
@@ -207,7 +197,6 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
     const newChecklist = { ...checklist, [key]: value };
     setChecklist(newChecklist);
     
-    // Update the database
     try {
       const tableName = shipment.type === 'import' ? 'imports' : 'exports';
       const idField = shipment.type === 'import' ? 'import_number' : 'export_number';
@@ -224,7 +213,6 @@ export const useShipmentDetail = (): UseShipmentDetailReturn => {
     } catch (err: any) {
       console.error('Error updating checklist:', err);
       toast.error(`Failed to update checklist: ${err.message}`);
-      // Revert the change if the update failed
       setChecklist(checklist);
     }
   };
