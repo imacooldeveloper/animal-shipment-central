@@ -100,6 +100,7 @@ export type Database = {
         Row: {
           animal_type: string
           arrival_date: string | null
+          checklist: string | null
           courier: string | null
           courier_account_number: string | null
           created_at: string | null
@@ -117,6 +118,7 @@ export type Database = {
         Insert: {
           animal_type: string
           arrival_date?: string | null
+          checklist?: string | null
           courier?: string | null
           courier_account_number?: string | null
           created_at?: string | null
@@ -134,6 +136,7 @@ export type Database = {
         Update: {
           animal_type?: string
           arrival_date?: string | null
+          checklist?: string | null
           courier?: string | null
           courier_account_number?: string | null
           created_at?: string | null

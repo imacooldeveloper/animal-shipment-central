@@ -1,13 +1,12 @@
 
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { ShipmentStatus } from "@/types"
+import { ShipmentStatus } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Map database status string to ShipmentStatus enum
 export const mapStatusToShipmentStatus = (status: string | null): ShipmentStatus => {
   if (!status) return 'draft';
   

@@ -15,19 +15,21 @@ import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
 import { ImportDatabaseItem } from '@/hooks/useImports';
 
+const DEFAULT_CHECKLIST = {
+  transferForms: false,
+  healthCert: false,
+  importPermit: false,
+  courier: false,
+  animalReceipt: false,
+  facilitiesReady: false,
+};
+
 const ImportDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
-  const [checklist, setChecklist] = useState({
-    transferForms: false,
-    healthCert: false,
-    importPermit: false,
-    courier: false,
-    animalReceipt: false,
-    facilitiesReady: false,
-  });
+  const [checklist, setChecklist] = useState(DEFAULT_CHECKLIST);
 
   // Fetch import details
   const { data: importData, isLoading, error } = useQuery({
@@ -45,7 +47,16 @@ const ImportDetail = () => {
       
       // If we have checklist data in the database, populate the state
       if (data.checklist) {
-        setChecklist(JSON.parse(data.checklist));
+        try {
+          const parsedChecklist = JSON.parse(data.checklist);
+          // Merge with default to ensure all expected fields are present
+          setChecklist({ ...DEFAULT_CHECKLIST, ...parsedChecklist });
+        } catch (e) {
+          console.error('Error parsing checklist JSON:', e);
+          setChecklist(DEFAULT_CHECKLIST);
+        }
+      } else {
+        setChecklist(DEFAULT_CHECKLIST);
       }
       
       return data as ImportDatabaseItem;
