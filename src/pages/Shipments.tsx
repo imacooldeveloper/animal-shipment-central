@@ -34,7 +34,7 @@ import {
   Search,
   Truck,
   Loader2,
-  BoxX
+  Box
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
@@ -43,6 +43,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ImportDatabaseItem } from '@/hooks/useImports';
 import { ExportDatabaseItem } from '@/pages/Exports';
 import { mapStatusToShipmentStatus } from '@/lib/utils';
+import { toast } from "sonner";
 
 interface CombinedShipment {
   id: string;
@@ -72,16 +73,16 @@ const Shipments = () => {
       setError(null);
       
       try {
-        console.log("Fetching completed shipments from Supabase...");
+        console.log("Fetching shipments from Supabase...");
         
-        // Fetch completed imports
+        // Fetch imports
         const { data: importsData, error: importsError } = await supabase
           .from('imports')
           .select('*');
         
         if (importsError) throw importsError;
         
-        // Fetch completed exports
+        // Fetch exports
         const { data: exportsData, error: exportsError } = await supabase
           .from('exports')
           .select('*');
@@ -122,10 +123,20 @@ const Shipments = () => {
         });
         
         // Combine shipments
-        setShipments([...formattedImports, ...formattedExports]);
+        const allShipments = [...formattedImports, ...formattedExports];
+        
+        if (allShipments.length === 0) {
+          console.log("No shipments found in the database");
+        }
+        
+        setShipments(allShipments);
+        
+        // Display toast notification of success
+        toast.success(`Found ${allShipments.length} shipments`);
       } catch (error: any) {
         console.error('Error fetching shipments:', error);
         setError(error.message || 'Failed to load shipments');
+        toast.error(`Failed to load shipments: ${error.message || 'Unknown error'}`);
       } finally {
         setLoading(false);
       }
@@ -252,7 +263,7 @@ const Shipments = () => {
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <BoxX className="h-10 w-10 text-destructive mb-2" />
+                <Box className="h-10 w-10 text-destructive mb-2" />
                 <h3 className="text-lg font-medium text-destructive">Error loading shipments</h3>
                 <p className="text-muted-foreground mt-1">{error}</p>
                 <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
@@ -266,11 +277,17 @@ const Shipments = () => {
                 </TabsContent>
                 
                 <TabsContent value="imports" className="m-0">
-                  {renderShipmentsList(filteredShipments, viewMode)}
+                  {renderShipmentsList(
+                    filteredShipments.filter(s => s.type === 'import'),
+                    viewMode
+                  )}
                 </TabsContent>
                 
                 <TabsContent value="exports" className="m-0">
-                  {renderShipmentsList(filteredShipments, viewMode)}
+                  {renderShipmentsList(
+                    filteredShipments.filter(s => s.type === 'export'),
+                    viewMode
+                  )}
                 </TabsContent>
               </>
             )}
@@ -285,7 +302,7 @@ const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 
   if (shipments.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 border rounded-md bg-background/50">
-        <BoxX className="h-10 w-10 text-muted-foreground mb-2" />
+        <Box className="h-10 w-10 text-muted-foreground mb-2" />
         <h3 className="text-lg font-medium">No shipments found</h3>
         <p className="text-muted-foreground mt-1">There are no shipments matching your criteria</p>
         <Button asChild className="mt-4">

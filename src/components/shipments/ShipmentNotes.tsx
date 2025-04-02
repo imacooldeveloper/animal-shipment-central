@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { FileText, Send, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,50 +16,48 @@ interface ShipmentNotesProps {
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
-  const parsedInitialNotes = parseInitialNotes(existingNotes);
+  const parsedInitialNotes = parseNotes(existingNotes);
   
   const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper function to safely parse initial notes without recursion
-  function parseInitialNotes(notesData: ShipmentNote[] | string | null): ShipmentNote[] {
-    // Return empty array if no data
-    if (!notesData) return [];
+  // Helper function to safely parse notes - fixed to avoid type recursion
+  function parseNotes(notesInput: ShipmentNote[] | string | null): ShipmentNote[] {
+    if (!notesInput) return [];
     
-    // Return as is if already an array
-    if (Array.isArray(notesData)) {
-      return notesData;
+    if (Array.isArray(notesInput)) {
+      return notesInput;
     }
     
-    // For string data, try to parse JSON
-    if (typeof notesData === 'string') {
+    // Handle string type notes
+    if (typeof notesInput === 'string') {
       try {
-        const parsed = JSON.parse(notesData);
+        const parsed = JSON.parse(notesInput);
         if (Array.isArray(parsed)) {
           return parsed;
         } else {
-          // Not a valid notes array
-          return [createSingleNote(notesData)];
+          // If parsing succeeded but didn't produce an array
+          return [{
+            id: crypto.randomUUID(),
+            content: notesInput,
+            created_at: new Date().toISOString(),
+            user_name: 'User'
+          }];
         }
       } catch (e) {
-        // If JSON parsing fails, treat as content for a single note
-        return [createSingleNote(notesData)];
+        // If JSON parsing fails, treat as a single note
+        return [{
+          id: crypto.randomUUID(),
+          content: notesInput,
+          created_at: new Date().toISOString(),
+          user_name: 'User'
+        }];
       }
     }
     
-    // Fallback for any other case
+    // Default fallback for any other case
     return [];
-  }
-  
-  // Helper function to create a single note from string content
-  function createSingleNote(content: string): ShipmentNote {
-    return {
-      id: crypto.randomUUID(),
-      content: content,
-      created_at: new Date().toISOString(),
-      user_name: 'User'
-    };
   }
 
   const handleAddNote = async () => {
