@@ -42,46 +42,59 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
   const [checklist, setChecklist] = useState<ImportChecklist>(initialChecklist);
   const [progress, setProgress] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<Partial<ImportChecklist>>({});
   
-  // Prevent auto-update while typing by using a delay and batching updates
+  // Use a much longer delay to prevent screen jumps while typing
   useEffect(() => {
     if (!formData) return;
     
-    // Use setTimeout with a longer delay to prevent rapid changes causing UI jumps
-    const timer = setTimeout(() => {
-      let hasChanges = false;
-      const newChecklist = { ...checklist };
-      
-      // Only update if values exist and are different from current state
-      if (formData.sendingLab && !checklist.transferForms) {
-        newChecklist.transferForms = true;
-        hasChanges = true;
-      }
-      if (formData.courier && !checklist.courier) {
-        newChecklist.courier = true;
-        hasChanges = true;
-      }
-      if (formData.arrivalDate && !checklist.animalReceipt) {
-        newChecklist.animalReceipt = true;
-        hasChanges = true;
-      }
-      if ((formData.labContactEmail && formData.labContactName) && !checklist.importPermit) {
-        newChecklist.importPermit = true;
-        hasChanges = true;
-      }
-      if ((formData.animalType && formData.quantity) && !checklist.healthCert) {
-        newChecklist.healthCert = true;
-        hasChanges = true;
-      }
-      
-      // Only update state if changes were made to avoid unnecessary re-renders
-      if (hasChanges) {
-        setChecklist(newChecklist);
-      }
-    }, 2000); // Increase to 2 seconds to further reduce likelihood of pushing out of view
+    // Store potential updates but don't apply them immediately
+    const newPendingUpdates = { ...pendingUpdates };
+    let hasNewUpdates = false;
     
-    return () => clearTimeout(timer);
-  }, [formData, checklist]);
+    // Only mark fields for update if they meet criteria and aren't already true
+    if (formData.sendingLab && !checklist.transferForms) {
+      newPendingUpdates.transferForms = true;
+      hasNewUpdates = true;
+    }
+    
+    if (formData.courier && !checklist.courier) {
+      newPendingUpdates.courier = true;
+      hasNewUpdates = true;
+    }
+    
+    if (formData.arrivalDate && !checklist.animalReceipt) {
+      newPendingUpdates.animalReceipt = true;
+      hasNewUpdates = true;
+    }
+    
+    if ((formData.labContactEmail && formData.labContactName) && !checklist.importPermit) {
+      newPendingUpdates.importPermit = true;
+      hasNewUpdates = true;
+    }
+    
+    if ((formData.animalType && formData.quantity) && !checklist.healthCert) {
+      newPendingUpdates.healthCert = true;
+      hasNewUpdates = true;
+    }
+    
+    // Only update state if we have new updates to prevent unnecessary renders
+    if (hasNewUpdates) {
+      setPendingUpdates(newPendingUpdates);
+      
+      // Set a very long timeout to apply updates (5 seconds)
+      // This prevents disruptive UI changes while user is actively typing
+      const timer = setTimeout(() => {
+        setChecklist(prev => ({
+          ...prev,
+          ...newPendingUpdates
+        }));
+        setPendingUpdates({});
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [formData, checklist, pendingUpdates]);
   
   // Update progress when checklist changes
   useEffect(() => {
@@ -97,6 +110,18 @@ const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChe
     if (importId !== 'new-import') {
       setIsSaving(true);
       try {
+        // First check if the import exists
+        const { data, error: fetchError } = await supabase
+          .from('imports')
+          .select('import_number')
+          .eq('import_number', importId)
+          .single();
+          
+        if (fetchError) {
+          console.error('Error fetching import:', fetchError);
+          throw fetchError;
+        }
+        
         const { error } = await supabase
           .from('imports')
           .update({ checklist: JSON.stringify(newChecklist) })

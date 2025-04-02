@@ -6,30 +6,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ExportDatabaseItem } from '@/types';
 
 // Define the checklist type
 export interface ExportChecklist {
   healthCert: boolean;
   exportPermit: boolean;
-  packingList: boolean;
   transferForms: boolean;
   customsForms: boolean;
   courier: boolean;
-  destinationApproval: boolean;
   pickupDate: boolean;
-  trackingConfirmed: boolean;
+  shippingLabels: boolean;
+  packingList: boolean;
+  packageReady: boolean;
 }
 
 export const DEFAULT_EXPORT_CHECKLIST: ExportChecklist = {
   healthCert: false,
   exportPermit: false,
-  packingList: false,
   transferForms: false,
   customsForms: false,
   courier: false,
-  destinationApproval: false,
   pickupDate: false,
-  trackingConfirmed: false
+  shippingLabels: false,
+  packingList: false,
+  packageReady: false
 };
 
 interface ExportChecklistCardProps {
@@ -42,43 +43,59 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
   const [checklist, setChecklist] = useState<ExportChecklist>(initialChecklist);
   const [progress, setProgress] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<Partial<ExportChecklist>>({});
   
-  // Prevent auto-update while typing by using a delay
+  // Use a much longer delay to prevent screen jumps while typing
   useEffect(() => {
     if (!formData) return;
     
-    // Use setTimeout to prevent rapid changes while typing
-    const timer = setTimeout(() => {
-      const newChecklist = { ...checklist };
-      
-      // Only update if values exist and are different from current state
-      if ((formData.sendingLab && formData.destinationLab) && !checklist.transferForms) {
-        newChecklist.transferForms = true;
-      }
-      if (formData.courier && !checklist.courier) {
-        newChecklist.courier = true;
-      }
-      if (formData.departureDate && !checklist.pickupDate) {
-        newChecklist.pickupDate = true;
-      }
-      if ((formData.labContactEmail && formData.labContactName) && !checklist.exportPermit) {
-        newChecklist.exportPermit = true;
-      }
-      if ((formData.animalType && formData.quantity) && !checklist.healthCert) {
-        newChecklist.healthCert = true;
-      }
-      if (formData.trackingNumber && !checklist.trackingConfirmed) {
-        newChecklist.trackingConfirmed = true;
-      }
-      
-      // Only update state if changes were made to avoid unnecessary re-renders
-      if (JSON.stringify(newChecklist) !== JSON.stringify(checklist)) {
-        setChecklist(newChecklist);
-      }
-    }, 2000); // Increase to 2 seconds to reduce likelihood of pushing out of view
+    // Store potential updates but don't apply them immediately
+    const newPendingUpdates = { ...pendingUpdates };
+    let hasNewUpdates = false;
     
-    return () => clearTimeout(timer);
-  }, [formData, checklist]);
+    // Only mark fields for update if they meet criteria and aren't already true
+    if ((formData.sendingLab && formData.destinationLab) && !checklist.transferForms) {
+      newPendingUpdates.transferForms = true;
+      hasNewUpdates = true;
+    }
+    
+    if (formData.courier && !checklist.courier) {
+      newPendingUpdates.courier = true;
+      hasNewUpdates = true;
+    }
+    
+    if (formData.departureDate && !checklist.pickupDate) {
+      newPendingUpdates.pickupDate = true;
+      hasNewUpdates = true;
+    }
+    
+    if ((formData.labContactEmail && formData.labContactName) && !checklist.exportPermit) {
+      newPendingUpdates.exportPermit = true;
+      hasNewUpdates = true;
+    }
+    
+    if ((formData.animalType && formData.quantity) && !checklist.healthCert) {
+      newPendingUpdates.healthCert = true;
+      hasNewUpdates = true;
+    }
+    
+    // Only update state if we have new updates to prevent unnecessary renders
+    if (hasNewUpdates) {
+      setPendingUpdates(newPendingUpdates);
+      
+      // Set a very long timeout to apply updates (5 seconds)
+      // This prevents disruptive UI changes while user is actively typing
+      const timer = setTimeout(() => {
+        setChecklist(prev => ({
+          ...prev,
+          ...newPendingUpdates
+        }));
+        setPendingUpdates({});
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [formData, checklist, pendingUpdates]);
   
   // Update progress when checklist changes
   useEffect(() => {
@@ -94,9 +111,26 @@ const ExportChecklistCard = ({ exportId, initialChecklist, formData }: ExportChe
     if (exportId !== 'new-export') {
       setIsSaving(true);
       try {
+        // First check if the export exists
+        const { data, error: fetchError } = await supabase
+          .from('exports')
+          .select('export_number')
+          .eq('export_number', exportId)
+          .single();
+          
+        if (fetchError) {
+          console.error('Error fetching export:', fetchError);
+          throw fetchError;
+        }
+        
+        // Create an update object with the string serialization of the checklist
+        const updateObj: Partial<ExportDatabaseItem> = {
+          checklist: JSON.stringify(newChecklist)
+        };
+        
         const { error } = await supabase
           .from('exports')
-          .update({ checklist: JSON.stringify(newChecklist) })
+          .update(updateObj)
           .eq('export_number', exportId);
           
         if (error) throw error;
@@ -161,13 +195,13 @@ const formatChecklistItem = (key: keyof ExportChecklist): string => {
   const labels: Record<keyof ExportChecklist, string> = {
     healthCert: "Health Certificate",
     exportPermit: "Export Permit",
-    packingList: "Packing List",
     transferForms: "Transfer Forms",
     customsForms: "Customs Forms",
     courier: "Courier Arranged",
-    destinationApproval: "Destination Approval",
-    pickupDate: "Pickup Date Confirmed",
-    trackingConfirmed: "Tracking Confirmed"
+    pickupDate: "Pickup Date Scheduled",
+    shippingLabels: "Shipping Labels",
+    packingList: "Packing List",
+    packageReady: "Package Ready"
   };
   
   return labels[key] || key;

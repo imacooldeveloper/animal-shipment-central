@@ -157,6 +157,7 @@ export interface ExportDatabaseItem {
   checklist?: string;
   created_at?: string;
   created_by?: string;
+  is_international?: boolean;
 }
 
 // Dashboard type for displaying shipments on dashboard

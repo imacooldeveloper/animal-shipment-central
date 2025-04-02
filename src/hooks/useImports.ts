@@ -14,6 +14,7 @@ export interface ImportDatabaseItem {
   status: string | null;
   arrival_date: string | null;
   animal_type: string;
+  quantity: string;
   created_at: string;
   // Additional fields that might be in the database
   courier_account_number?: string | null;
@@ -22,7 +23,6 @@ export interface ImportDatabaseItem {
   lab_contact_name?: string | null;
   notes?: string | null;
   protocol_number?: string | null;
-  quantity?: string;
   checklist?: string | null;
 }
 
@@ -66,6 +66,7 @@ export const useImports = () => {
     const fetchImports = async () => {
       setLoading(true);
       try {
+        console.log("Fetching imports from Supabase...");
         const { data, error } = await supabase
           .from('imports')
           .select('*')
@@ -75,6 +76,7 @@ export const useImports = () => {
           throw error;
         }
         
+        console.log("Fetched imports:", data?.length || 0);
         if (data) {
           setImports(data);
         } else {
@@ -108,11 +110,11 @@ export const useImports = () => {
 
   // Format imports for the components
   const formattedImports: ImportItem[] = filteredImports.map(imp => ({
-    id: imp.import_number || imp.id,
+    id: imp.import_number,
     sendingLab: imp.sending_lab,
     courier: imp.courier || 'Not specified',
     status: mapStatusToShipmentStatus(imp.status),
-    arrivalDate: imp.arrival_date || 'Not scheduled',
+    arrivalDate: imp.arrival_date ? new Date(imp.arrival_date).toLocaleDateString() : 'Not scheduled',
     animalType: imp.animal_type
   }));
   
@@ -120,6 +122,7 @@ export const useImports = () => {
   
   return {
     imports: formattedImports,
+    rawImports: imports,
     loading,
     searchQuery,
     setSearchQuery,

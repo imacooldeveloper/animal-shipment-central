@@ -32,12 +32,15 @@ const ImportDetail = () => {
   // Load formData initially when importData is available
   useEffect(() => {
     if (importData && !formData) {
+      console.log("Setting form data from import data:", importData);
       setFormData({
         sendingLab: importData.sending_lab,
         courier: importData.courier,
         arrivalDate: importData.arrival_date,
         labContactName: importData.lab_contact_name,
         labContactEmail: importData.lab_contact_email,
+        animalType: importData.animal_type,
+        quantity: importData.quantity,
       });
     }
   }, [importData, formData]);
@@ -45,10 +48,12 @@ const ImportDetail = () => {
   // Parse checklist from importData
   const parseChecklist = (): ImportChecklist => {
     if (!importData || !importData.checklist) {
+      console.log("No checklist data found, using default");
       return DEFAULT_CHECKLIST;
     }
     
     try {
+      console.log("Parsing checklist:", importData.checklist);
       const parsedChecklist = JSON.parse(importData.checklist);
       return { ...DEFAULT_CHECKLIST, ...parsedChecklist };
     } catch (e) {
@@ -77,9 +82,11 @@ const ImportDetail = () => {
 
   // Error state
   if (error || !importData) {
-    return <ErrorState onGoBack={handleGoBack} />;
+    console.error("Error loading import:", error);
+    return <ErrorState onGoBack={handleGoBack} error={error} />;
   }
 
+  console.log("Rendered import details for:", importData.import_number);
   const progressValue = calculateProgress();
 
   return (
@@ -133,12 +140,13 @@ const LoadingState = () => (
   </div>
 );
 
-const ErrorState = ({ onGoBack }: { onGoBack: () => void }) => (
+const ErrorState = ({ onGoBack, error }: { onGoBack: () => void, error: any }) => (
   <div className="container mx-auto px-4 py-6">
     <Card>
       <CardContent className="pt-6">
         <div className="flex flex-col items-center py-12">
           <p className="text-destructive mb-4">Error loading import details</p>
+          {error && <p className="text-sm text-muted-foreground mb-4">Details: {error.message || JSON.stringify(error)}</p>}
           <button onClick={onGoBack} className="flex items-center gap-2 px-4 py-2 rounded-md border">
             Back to Imports
           </button>
@@ -199,16 +207,23 @@ const useImportQuery = (id: string | undefined) => {
     queryFn: async () => {
       if (!id) throw new Error('Import ID is required');
       
+      console.log("Fetching import with ID:", id);
       const { data, error } = await supabase
         .from('imports')
         .select('*')
         .eq('import_number', id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching import:", error);
+        throw error;
+      }
       
+      console.log("Fetched import data:", data);
       return data as ImportDatabaseItem;
-    }
+    },
+    retry: 1,
+    refetchOnWindowFocus: false
   });
 };
 
@@ -221,6 +236,7 @@ const useUpdateImportMutation = (
     mutationFn: async (updatedImport: any) => {
       if (!id) throw new Error('Import ID is required');
       
+      console.log("Updating import with ID:", id, "Data:", updatedImport);
       const { error } = await supabase
         .from('imports')
         .update({
@@ -238,7 +254,10 @@ const useUpdateImportMutation = (
         })
         .eq('import_number', id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating import:", error);
+        throw error;
+      }
       return true;
     },
     onSuccess: () => {
