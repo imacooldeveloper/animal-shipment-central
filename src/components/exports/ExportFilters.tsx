@@ -16,6 +16,7 @@ interface ExportFiltersProps {
   statusFilter: string;
   setStatusFilter: (status: string) => void;
   toggleViewMode: () => void;
+  viewMode: 'table' | 'card';
 }
 
 const ExportFilters = ({ 
@@ -23,7 +24,8 @@ const ExportFilters = ({
   setSearchQuery, 
   statusFilter, 
   setStatusFilter,
-  toggleViewMode
+  toggleViewMode,
+  viewMode
 }: ExportFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -58,8 +60,12 @@ const ExportFilters = ({
           variant="outline" 
           size="icon"
           onClick={toggleViewMode}
+          title={viewMode === 'table' ? 'Switch to card view' : 'Switch to table view'}
         >
-          <LayoutGrid className="h-4 w-4" />
+          {viewMode === 'table' ? 
+            <LayoutGrid className="h-4 w-4" /> : 
+            <LayoutList className="h-4 w-4" />
+          }
         </Button>
       </div>
     </div>
