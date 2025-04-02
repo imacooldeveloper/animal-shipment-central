@@ -70,4 +70,20 @@
   .status-complete {
     @apply bg-app-status-complete/20 text-app-status-complete;
   }
+  
+  .card-gradient-rose {
+    @apply bg-gradient-to-br from-rose-200 to-rose-300 border-none shadow-md;
+  }
+  
+  .card-gradient-emerald {
+    @apply bg-gradient-to-br from-emerald-200 to-emerald-300 border-none shadow-md;
+  }
+  
+  .card-gradient-blue {
+    @apply bg-gradient-to-br from-blue-200 to-blue-300 border-none shadow-md;
+  }
+  
+  .card-gradient-purple {
+    @apply bg-gradient-to-br from-purple-200 to-purple-300 border-none shadow-md;
+  }
 }

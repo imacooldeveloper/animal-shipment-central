@@ -7,7 +7,7 @@ import {
   SidebarTrigger
 } from "@/components/ui/sidebar";
 import { 
-  ClipboardList, 
+  LayoutDashboard, 
   FileText, 
   FolderArchive, 
   MessageSquare,
@@ -26,7 +26,7 @@ const Sidebar = () => {
     {
       name: "Dashboard",
       path: "/",
-      icon: <ClipboardList className="h-5 w-5" />
+      icon: <LayoutDashboard className="h-5 w-5" />
     },
     {
       name: "Imports",
@@ -59,22 +59,22 @@ const Sidebar = () => {
     <SidebarComponent>
       <SidebarHeader className="flex justify-between items-center">
         <div className="flex items-center gap-2 px-4 overflow-hidden">
-          <span className="font-bold text-lg md:text-xl truncate max-w-[160px]">Animal Shipment</span>
+          <span className="font-bold text-xl text-rose-500">AnimalFlow</span>
         </div>
         <SidebarTrigger>
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
       </SidebarHeader>
       <SidebarContent>
-        <nav className="space-y-1 p-2">
+        <nav className="space-y-1 p-3">
           {routes.map((route) => (
             <Link
               key={route.path}
               to={route.path}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+                "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors",
                 location.pathname === route.path
-                  ? "bg-app-blue-light text-app-blue font-medium"
+                  ? "bg-rose-50 text-rose-500 font-medium"
                   : "text-gray-700 hover:bg-gray-100"
               )}
               onClick={() => {
