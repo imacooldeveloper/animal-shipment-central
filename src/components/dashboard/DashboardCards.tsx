@@ -3,13 +3,13 @@ import {
   Card, 
   CardContent
 } from "@/components/ui/card";
-import { Box, Users, Calendar, BrainCircuit } from 'lucide-react';
+import { Box, Users, Calendar, BrainCircuit, MessageSquare } from 'lucide-react';
 import { Link } from "react-router-dom";
 
 interface DashboardCardProps {
   title: string;
   value: number;
-  color: 'rose' | 'emerald' | 'blue' | 'purple';
+  color: 'rose' | 'emerald' | 'blue' | 'purple' | 'amber';
   icon: React.ReactNode;
   path: string;
 }
@@ -20,6 +20,7 @@ const DashboardCard = ({ title, value, color, icon, path }: DashboardCardProps) 
     emerald: 'bg-gradient-to-br from-emerald-200 to-emerald-300',
     blue: 'bg-gradient-to-br from-blue-200 to-blue-300',
     purple: 'bg-gradient-to-br from-purple-200 to-purple-300',
+    amber: 'bg-gradient-to-br from-amber-200 to-amber-300',
   };
   
   const textColorClasses = {
@@ -27,6 +28,7 @@ const DashboardCard = ({ title, value, color, icon, path }: DashboardCardProps) 
     emerald: 'text-emerald-700',
     blue: 'text-blue-700',
     purple: 'text-purple-700',
+    amber: 'text-amber-700',
   };
   
   const textDarkColorClasses = {
@@ -34,6 +36,7 @@ const DashboardCard = ({ title, value, color, icon, path }: DashboardCardProps) 
     emerald: 'text-emerald-800',
     blue: 'text-blue-800',
     purple: 'text-purple-800',
+    amber: 'text-amber-800',
   };
   
   return (
@@ -64,7 +67,7 @@ interface DashboardCardsProps {
 
 const DashboardCards = ({ counts }: DashboardCardsProps) => {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <DashboardCard 
         title="Shipments" 
         value={counts.total} 
@@ -92,6 +95,13 @@ const DashboardCards = ({ counts }: DashboardCardsProps) => {
         color="purple" 
         icon={<BrainCircuit className="h-6 w-6 text-purple-700" />} 
         path="/documents"
+      />
+      <DashboardCard 
+        title="Message Templates" 
+        value={0} 
+        color="amber" 
+        icon={<MessageSquare className="h-6 w-6 text-amber-700" />} 
+        path="/templates"
       />
     </div>
   );
