@@ -33,7 +33,8 @@ import {
   Plus, 
   Search,
   Truck,
-  Loader2
+  Loader2,
+  BoxX
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
@@ -62,25 +63,28 @@ const Shipments = () => {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [shipments, setShipments] = useState<CombinedShipment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Fetch shipments from Supabase
   useEffect(() => {
     const fetchShipments = async () => {
       setLoading(true);
+      setError(null);
+      
       try {
+        console.log("Fetching completed shipments from Supabase...");
+        
         // Fetch completed imports
         const { data: importsData, error: importsError } = await supabase
           .from('imports')
-          .select('*')
-          .eq('status', 'complete');
+          .select('*');
         
         if (importsError) throw importsError;
         
         // Fetch completed exports
         const { data: exportsData, error: exportsError } = await supabase
           .from('exports')
-          .select('*')
-          .eq('status', 'complete');
+          .select('*');
         
         if (exportsError) throw exportsError;
         
@@ -119,8 +123,9 @@ const Shipments = () => {
         
         // Combine shipments
         setShipments([...formattedImports, ...formattedExports]);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching shipments:', error);
+        setError(error.message || 'Failed to load shipments');
       } finally {
         setLoading(false);
       }
@@ -178,9 +183,9 @@ const Shipments = () => {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>All Completed Shipments</CardTitle>
+          <CardTitle>All Shipments</CardTitle>
           <CardDescription>
-            View and manage all completed animal imports and exports
+            View and manage all animal imports and exports
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -245,6 +250,15 @@ const Shipments = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 <span className="ml-2 text-muted-foreground">Loading shipments...</span>
               </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <BoxX className="h-10 w-10 text-destructive mb-2" />
+                <h3 className="text-lg font-medium text-destructive">Error loading shipments</h3>
+                <p className="text-muted-foreground mt-1">{error}</p>
+                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                  Try Again
+                </Button>
+              </div>
             ) : (
               <>
                 <TabsContent value="all" className="m-0">
@@ -268,6 +282,22 @@ const Shipments = () => {
 };
 
 const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 'card') => {
+  if (shipments.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 border rounded-md bg-background/50">
+        <BoxX className="h-10 w-10 text-muted-foreground mb-2" />
+        <h3 className="text-lg font-medium">No shipments found</h3>
+        <p className="text-muted-foreground mt-1">There are no shipments matching your criteria</p>
+        <Button asChild className="mt-4">
+          <Link to="/shipments/new">
+            <Plus className="mr-2 h-4 w-4" /> 
+            Create New Shipment
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
   if (viewMode === 'table') {
     return (
       <div className="rounded-md border">
@@ -285,44 +315,36 @@ const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {shipments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center h-24">
-                  No shipments found
+            {shipments.map((shipment) => (
+              <TableRow key={shipment.id}>
+                <TableCell className="font-medium">
+                  <Link 
+                    to={`/shipments/${shipment.id}`}
+                    className={`hover:underline ${
+                      shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'
+                    }`}
+                  >
+                    {shipment.id}
+                  </Link>
                 </TableCell>
+                <TableCell>
+                  <ShipmentTypeBadge type={shipment.type} />
+                </TableCell>
+                <TableCell>{shipment.lab}</TableCell>
+                <TableCell>{shipment.country}</TableCell>
+                <TableCell>{shipment.courier || 'Not specified'}</TableCell>
+                <TableCell>
+                  <ShipmentStatusBadge status={shipment.status} />
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {shipment.date}
+                  </div>
+                </TableCell>
+                <TableCell>{shipment.animalType}</TableCell>
               </TableRow>
-            ) : (
-              shipments.map((shipment) => (
-                <TableRow key={shipment.id}>
-                  <TableCell className="font-medium">
-                    <Link 
-                      to={`/shipments/${shipment.id}`}
-                      className={`hover:underline ${
-                        shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'
-                      }`}
-                    >
-                      {shipment.id}
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <ShipmentTypeBadge type={shipment.type} />
-                  </TableCell>
-                  <TableCell>{shipment.lab}</TableCell>
-                  <TableCell>{shipment.country}</TableCell>
-                  <TableCell>{shipment.courier || 'Not specified'}</TableCell>
-                  <TableCell>
-                    <ShipmentStatusBadge status={shipment.status} />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                      {shipment.date}
-                    </div>
-                  </TableCell>
-                  <TableCell>{shipment.animalType}</TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>
@@ -330,52 +352,46 @@ const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 
   } else {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {shipments.length === 0 ? (
-          <div className="col-span-full text-center py-12 border rounded-md">
-            <p className="text-muted-foreground">No shipments found</p>
-          </div>
-        ) : (
-          shipments.map((shipment) => (
-            <Card key={shipment.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <Link to={`/shipments/${shipment.id}`}>
-                    <CardTitle 
-                      className={`hover:underline ${
-                        shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'
-                      }`}
-                    >
-                      {shipment.id}
-                    </CardTitle>
-                  </Link>
-                  <div className="flex gap-2">
-                    <ShipmentTypeBadge type={shipment.type} />
-                    <ShipmentStatusBadge status={shipment.status} />
-                  </div>
+        {shipments.map((shipment) => (
+          <Card key={shipment.id} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <Link to={`/shipments/${shipment.id}`}>
+                  <CardTitle 
+                    className={`hover:underline ${
+                      shipment.type === 'import' ? 'text-app-green' : 'text-app-blue'
+                    }`}
+                  >
+                    {shipment.id}
+                  </CardTitle>
+                </Link>
+                <div className="flex gap-2">
+                  <ShipmentTypeBadge type={shipment.type} />
+                  <ShipmentStatusBadge status={shipment.status} />
                 </div>
-                <CardDescription>{shipment.lab}, {shipment.country}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Courier:</span>
-                    <span className="text-sm font-medium">{shipment.courier || 'Not specified'}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      {shipment.type === 'import' ? 'Arrival' : 'Departure'} Date:
-                    </span>
-                    <span className="text-sm font-medium">{shipment.date}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Animal Type:</span>
-                    <span className="text-sm font-medium">{shipment.animalType}</span>
-                  </div>
+              </div>
+              <CardDescription>{shipment.lab}, {shipment.country}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Courier:</span>
+                  <span className="text-sm font-medium">{shipment.courier || 'Not specified'}</span>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    {shipment.type === 'import' ? 'Arrival' : 'Departure'} Date:
+                  </span>
+                  <span className="text-sm font-medium">{shipment.date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Animal Type:</span>
+                  <span className="text-sm font-medium">{shipment.animalType}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   }
