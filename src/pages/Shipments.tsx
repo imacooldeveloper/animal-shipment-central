@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Table, 
   TableBody, 
@@ -58,9 +58,13 @@ interface CombinedShipment {
 
 const Shipments = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialStatusFilter = queryParams.get('status') || "all";
+  
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("");
-  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>(initialStatusFilter);
+  const [typeFilter, setTypeFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [activeTab, setActiveTab] = useState<string>("all");
   const [shipments, setShipments] = useState<CombinedShipment[]>([]);
@@ -161,8 +165,8 @@ const Shipments = () => {
       (shipment.courier?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       shipment.country.toLowerCase().includes(searchQuery.toLowerCase());
       
-    const matchesStatus = statusFilter ? shipment.status === statusFilter : true;
-    const matchesType = typeFilter ? shipment.type === typeFilter : true;
+    const matchesStatus = statusFilter === "all" ? true : shipment.status === statusFilter;
+    const matchesType = typeFilter === "all" ? true : shipment.type === typeFilter;
     const matchesTab = activeTab === "all" ? true : 
                        activeTab === "imports" ? shipment.type === "import" : 
                        activeTab === "exports" ? shipment.type === "export" : true;
@@ -233,7 +237,7 @@ const Shipments = () => {
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
+                    <SelectItem value="all">All statuses</SelectItem>
                     <SelectItem value="draft">Draft</SelectItem>
                     <SelectItem value="progress">In Progress</SelectItem>
                     <SelectItem value="complete">Complete</SelectItem>
@@ -245,7 +249,7 @@ const Shipments = () => {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All types</SelectItem>
+                    <SelectItem value="all">All types</SelectItem>
                     <SelectItem value="import">Import</SelectItem>
                     <SelectItem value="export">Export</SelectItem>
                   </SelectContent>
