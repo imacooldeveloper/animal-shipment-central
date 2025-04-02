@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import DashboardCards from "@/components/dashboard/DashboardCards";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Package } from "lucide-react";
+import { ArrowRight, Package, FileText, Truck, Ship } from "lucide-react";
 
 const Index = () => {
   // Sample counts for the dashboard cards, now including imports and exports
@@ -30,7 +30,7 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-lg">View All Shipments</CardTitle>
+              <CardTitle className="text-lg">All Shipments</CardTitle>
               <CardDescription>Access all import and export shipments</CardDescription>
             </CardHeader>
             <CardContent>
@@ -38,6 +38,38 @@ const Index = () => {
                 <Link to="/shipments">
                   <Package className="mr-2 h-4 w-4" />
                   Go to Shipments
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Import Shipments</CardTitle>
+              <CardDescription>Manage incoming animal shipments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/imports">
+                  <Ship className="mr-2 h-4 w-4" />
+                  Go to Imports
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Export Shipments</CardTitle>
+              <CardDescription>Manage outgoing animal shipments</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full">
+                <Link to="/exports">
+                  <Truck className="mr-2 h-4 w-4" />
+                  Go to Exports
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
