@@ -32,11 +32,11 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
     }
     
     try {
-      const parsed = JSON.parse(notes as string);
-      return Array.isArray(parsed) ? parsed : [createSingleNote(notes as string)];
+      const parsed = typeof notes === 'string' ? JSON.parse(notes) : notes;
+      return Array.isArray(parsed) ? parsed : [createSingleNote(String(notes))];
     } catch (e) {
       // If parsing fails, treat as a single note
-      return notes ? [createSingleNote(notes as string)] : [];
+      return typeof notes === 'string' ? [createSingleNote(notes)] : [];
     }
   }
   

@@ -16,7 +16,7 @@ import ShipmentDetailContent from '@/components/shipments/ShipmentDetailContent'
 import ShipmentNotes from '@/components/shipments/ShipmentNotes';
 import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ExportShipmentView from '@/components/exports/ExportShipmentView';
-import { useShipmentDetail } from '@/hooks/useShipmentDetail';
+import { useShipmentDetail } from '@/hooks/shipment/useShipmentDetail';
 import { LoadingState, ErrorState } from '@/components/shipments/ShipmentDetailStates';
 
 const ShipmentDetail = () => {
@@ -30,6 +30,7 @@ const ShipmentDetail = () => {
     error,
     importData,
     exportData,
+    notes,
     updateChecklist,
     saveChanges,
     calculateProgress,
