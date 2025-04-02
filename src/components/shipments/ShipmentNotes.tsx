@@ -39,11 +39,11 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
     if (!notesData) return [];
     
     try {
-      const parsed = JSON.parse(notesData);
-      return Array.isArray(parsed) ? parsed : [createSingleNote(notesData)];
+      const parsed = JSON.parse(notesData as string);
+      return Array.isArray(parsed) ? parsed : [createSingleNote(notesData as string)];
     } catch (e) {
       // If parsing fails, treat as a single note
-      return [createSingleNote(notesData)];
+      return notesData ? [createSingleNote(notesData as string)] : [];
     }
   }
   
@@ -55,16 +55,6 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
       created_at: new Date().toISOString(),
       user_name: 'User'
     };
-  }
-
-  // Helper function to safely parse JSON
-  function tryParseJSON(jsonString: string): Note[] | null {
-    try {
-      const parsed = JSON.parse(jsonString);
-      return Array.isArray(parsed) ? parsed : null;
-    } catch (e) {
-      return null;
-    }
   }
 
   const handleAddNote = async () => {

@@ -1,10 +1,9 @@
+
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
 import { Trash } from 'lucide-react';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -17,56 +16,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { supabase } from '@/integrations/supabase/client';
 import { ImportDatabaseItem } from '@/hooks/useImports';
-import ImportShipmentView from '@/components/imports/ImportShipmentView';
-import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
 import ImportChecklistCard, { ImportChecklist, DEFAULT_CHECKLIST } from '@/components/imports/ImportChecklistCard';
 import ImportActionBar from '@/components/imports/ImportActionBar';
 import ShipmentNotes from '@/components/shipments/ShipmentNotes';
+import { useImportDetail, useUpdateImportMutation, useDeleteImportMutation } from '@/hooks/useImportDetail';
+import { LoadingState, ErrorState } from '@/components/imports/ImportDetailStates';
+import ImportDetailView from '@/components/imports/ImportDetailView';
 
 const ImportDetail = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const { id, importData, isLoading, error, isError, queryClient } = useImportDetail();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>(null);
-  const [notes, setNotes] = useState<any[]>([]);
-
-  // Fetch import details
-  const { 
-    data: importData, 
-    isLoading, 
-    error,
-    isError
-  } = useImportQuery(id);
 
   // Update import mutation
   const updateImportMutation = useUpdateImportMutation(id, queryClient, () => setIsEditing(false));
 
   // Delete import mutation
-  const deleteImportMutation = useMutation({
-    mutationFn: async () => {
-      if (!id) throw new Error('Import ID is required');
-      
-      console.log("Deleting import with ID:", id);
-      const { error } = await supabase
-        .from('imports')
-        .delete()
-        .eq('import_number', id);
-      
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => {
-      toast.success('Import shipment deleted successfully');
-      navigate('/imports');
-    },
-    onError: (error) => {
-      console.error('Error deleting import:', error);
-      toast.error('Failed to delete import shipment');
-    }
-  });
+  const deleteImportMutation = useDeleteImportMutation(id, navigate);
 
   // Load formData initially when importData is available
   useEffect(() => {
@@ -81,30 +49,6 @@ const ImportDetail = () => {
         animalType: importData.animal_type,
         quantity: importData.quantity,
       });
-
-      // Parse notes if they exist
-      if (importData.notes) {
-        try {
-          const parsedNotes = JSON.parse(importData.notes);
-          if (Array.isArray(parsedNotes)) {
-            setNotes(parsedNotes);
-          } else {
-            // If notes is not an array but a string, create a single note object
-            setNotes([{
-              id: '1',
-              content: importData.notes,
-              created_at: importData.created_at
-            }]);
-          }
-        } catch (e) {
-          // If parsing fails, treat as a single note
-          setNotes([{
-            id: '1',
-            content: importData.notes,
-            created_at: importData.created_at
-          }]);
-        }
-      }
     }
   }, [importData, formData]);
 
@@ -193,16 +137,13 @@ const ImportDetail = () => {
 
       <div className="grid gap-6 md:grid-cols-6">
         <div className="md:col-span-4">
-          {isEditing ? (
-            <EditingView 
-              importData={importData} 
-              handleSave={handleSave} 
-              handleCancel={handleCancel}
-              isPending={updateImportMutation.isPending}
-            />
-          ) : (
-            <ImportShipmentView importData={importData} />
-          )}
+          <ImportDetailView 
+            importData={importData}
+            isEditing={isEditing}
+            handleSave={handleSave}
+            handleCancel={handleCancel}
+            isPending={updateImportMutation.isPending}
+          />
         </div>
         
         <div className="md:col-span-2">
@@ -223,168 +164,6 @@ const ImportDetail = () => {
       </div>
     </div>
   );
-};
-
-// Helper components to keep the main component clean
-const LoadingState = () => (
-  <div className="container mx-auto px-4 py-6">
-    <Card>
-      <CardContent className="pt-6">
-        <div className="flex justify-center items-center py-12">
-          <p className="text-muted-foreground">Loading import details...</p>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const ErrorState = ({ onGoBack, error }: { onGoBack: () => void, error: any }) => (
-  <div className="container mx-auto px-4 py-6">
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-destructive">Error loading import details</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-2">
-        <div className="flex flex-col items-center py-8">
-          <p className="text-destructive mb-4">
-            {error instanceof Error 
-              ? error.message 
-              : error?.message || "Details: JSON object requested, multiple (or no) rows returned"}
-          </p>
-          <Button onClick={onGoBack} className="gap-2">
-            Back to Imports
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
-
-const EditingView = ({ 
-  importData, 
-  handleSave, 
-  handleCancel,
-  isPending
-}: { 
-  importData: ImportDatabaseItem, 
-  handleSave: (data: any) => void, 
-  handleCancel: () => void,
-  isPending: boolean
-}) => (
-  <Card>
-    <CardHeader className="pb-3">
-      <CardTitle>Edit Import Shipment</CardTitle>
-      <CardDescription>
-        Update the details for this import shipment
-      </CardDescription>
-    </CardHeader>
-    <CardContent>
-      <ImportShipmentForm 
-        onSubmit={handleSave} 
-        onCancel={handleCancel}
-        initialData={{
-          importNumber: importData.import_number,
-          sendingLab: importData.sending_lab,
-          protocolNumber: importData.protocol_number || '',
-          courier: importData.courier || '',
-          courierAccountNumber: importData.courier_account_number || '',
-          arrivalDate: importData.arrival_date ? new Date(importData.arrival_date) : undefined,
-          animalType: importData.animal_type,
-          quantity: importData.quantity,
-          status: importData.status || '',
-          notes: importData.notes || '',
-          labContactName: importData.lab_contact_name || '',
-          labContactEmail: importData.lab_contact_email || '',
-        }}
-        isEditing={true}
-        isSubmitting={isPending}
-        formId="import-edit-form"
-      />
-    </CardContent>
-  </Card>
-);
-
-// Custom hooks for data fetching and mutations
-const useImportQuery = (id: string | undefined) => {
-  return useQuery({
-    queryKey: ['import', id],
-    queryFn: async () => {
-      if (!id) throw new Error('Import ID is required');
-      
-      console.log("Fetching import with ID:", id);
-      try {
-        const { data, error, count } = await supabase
-          .from('imports')
-          .select('*')
-          .eq('import_number', id)
-          .maybeSingle();
-        
-        if (error) {
-          console.error("Supabase error fetching import:", error);
-          throw new Error(error.message);
-        }
-        
-        if (!data) {
-          console.error("Import not found:", id);
-          throw new Error(`Import ${id} not found`);
-        }
-        
-        console.log("Fetched import data:", data);
-        return data as ImportDatabaseItem;
-      } catch (err) {
-        console.error("Error in import query:", err);
-        throw err;
-      }
-    },
-    retry: 1,
-    refetchOnWindowFocus: false
-  });
-};
-
-const useUpdateImportMutation = (
-  id: string | undefined, 
-  queryClient: any, 
-  onSuccessCallback: () => void
-) => {
-  return useMutation({
-    mutationFn: async (updatedImport: any) => {
-      if (!id) throw new Error('Import ID is required');
-      
-      console.log("Updating import with ID:", id, "Data:", updatedImport);
-      const { error } = await supabase
-        .from('imports')
-        .update({
-          sending_lab: updatedImport.sendingLab,
-          protocol_number: updatedImport.protocolNumber,
-          courier: updatedImport.courier === 'Other' ? updatedImport.courierOther : updatedImport.courier,
-          courier_account_number: updatedImport.courierAccountNumber,
-          arrival_date: updatedImport.arrivalDate ? new Date(updatedImport.arrivalDate).toISOString().split('T')[0] : null,
-          animal_type: updatedImport.animalType,
-          quantity: updatedImport.quantity,
-          status: updatedImport.status === 'Other' ? updatedImport.statusOther : updatedImport.status,
-          notes: updatedImport.notes,
-          lab_contact_name: updatedImport.labContactName,
-          lab_contact_email: updatedImport.labContactEmail,
-        })
-        .eq('import_number', id);
-      
-      if (error) {
-        console.error("Error updating import:", error);
-        throw error;
-      }
-      return true;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['import', id] });
-      queryClient.invalidateQueries({ queryKey: ['imports'] });
-      toast.success('Import shipment updated successfully');
-      onSuccessCallback();
-    },
-    onError: (error) => {
-      console.error('Error updating import:', error);
-      toast.error('Failed to update import shipment');
-    }
-  });
 };
 
 export default ImportDetail;
