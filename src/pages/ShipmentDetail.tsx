@@ -24,6 +24,13 @@ import { ExportDatabaseItem } from '@/pages/Exports';
 import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ExportShipmentView from '@/components/exports/ExportShipmentView';
 
+interface Note {
+  id: string;
+  content: string;
+  created_at: string;
+  user_name?: string;
+}
+
 const ShipmentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -33,7 +40,7 @@ const ShipmentDetail = () => {
   const [error, setError] = useState<string | null>(null);
   const [importData, setImportData] = useState<ImportDatabaseItem | null>(null);
   const [exportData, setExportData] = useState<ExportDatabaseItem | null>(null);
-  const [notes, setNotes] = useState<any[]>([]);
+  const [notes, setNotes] = useState<Note[] | string>([]);
   
   // Determine if this is an import or export by checking the ID format
   const isImport = id?.startsWith('IMP');
@@ -64,21 +71,9 @@ const ShipmentDetail = () => {
           if (data) {
             setImportData(data);
             
-            // Parse notes if they exist and are in JSON format
+            // Handle notes
             if (data.notes) {
-              try {
-                const parsedNotes = JSON.parse(data.notes);
-                if (Array.isArray(parsedNotes)) {
-                  setNotes(parsedNotes);
-                }
-              } catch (e) {
-                // If notes is not valid JSON, treat it as a single note
-                setNotes([{
-                  id: '1',
-                  content: data.notes,
-                  created_at: data.created_at
-                }]);
-              }
+              setNotes(data.notes);
             }
             
             // Parse checklist if it exists
@@ -136,21 +131,9 @@ const ShipmentDetail = () => {
           if (data) {
             setExportData(data);
             
-            // Parse notes if they exist and are in JSON format
+            // Handle notes
             if (data.notes) {
-              try {
-                const parsedNotes = JSON.parse(data.notes);
-                if (Array.isArray(parsedNotes)) {
-                  setNotes(parsedNotes);
-                }
-              } catch (e) {
-                // If notes is not valid JSON, treat it as a single note
-                setNotes([{
-                  id: '1',
-                  content: data.notes,
-                  created_at: data.created_at
-                }]);
-              }
+              setNotes(data.notes);
             }
             
             // Parse checklist if it exists

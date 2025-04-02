@@ -56,9 +56,6 @@ const MobileNavigation = () => {
     }
   ];
 
-  // Find current route
-  const currentRoute = routes.find(route => location.pathname === route.path);
-
   const handleOpenSidebar = () => {
     setOpenMobile(true);
   };

@@ -18,13 +18,28 @@ interface Note {
 interface ShipmentNotesProps {
   shipmentId: string;
   shipmentType: 'import' | 'export';
-  existingNotes: Note[];
+  existingNotes: Note[] | string;
 }
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
-  const [notes, setNotes] = useState<Note[]>(existingNotes);
+  // Parse notes if they are a string, otherwise use them as is
+  const parsedInitialNotes = typeof existingNotes === 'string' ? 
+    (tryParseJSON(existingNotes) || []) : 
+    existingNotes;
+  
+  const [notes, setNotes] = useState<Note[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Helper function to safely parse JSON
+  function tryParseJSON(jsonString: string): Note[] | null {
+    try {
+      const parsed = JSON.parse(jsonString);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
@@ -71,13 +86,18 @@ const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: Shipmen
   };
   
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric'
-    });
+    try {
+      return new Date(dateString).toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
   return (

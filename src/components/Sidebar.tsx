@@ -4,7 +4,8 @@ import {
   Sidebar as SidebarComponent, 
   SidebarContent, 
   SidebarHeader, 
-  SidebarTrigger
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { 
   Box, 
@@ -19,7 +20,6 @@ import {
   BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSidebar } from "@/components/ui/sidebar";
 
 const Sidebar = () => {
   const location = useLocation();
