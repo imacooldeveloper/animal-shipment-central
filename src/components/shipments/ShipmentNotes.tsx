@@ -17,32 +17,39 @@ interface ShipmentNotesProps {
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
-  const parsedInitialNotes = parseNotes(existingNotes);
+  const parsedInitialNotes = parseInitialNotes(existingNotes);
   
   const [notes, setNotes] = useState<ShipmentNote[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Helper function to safely parse notes
-  function parseNotes(notes: ShipmentNote[] | string | null): ShipmentNote[] {
-    if (!notes) return [];
+  // Helper function to safely parse initial notes without recursion
+  function parseInitialNotes(notesData: ShipmentNote[] | string | null): ShipmentNote[] {
+    // Return empty array if no data
+    if (!notesData) return [];
     
-    if (Array.isArray(notes)) {
-      return notes;
+    // Return as is if already an array
+    if (Array.isArray(notesData)) {
+      return notesData;
     }
     
-    // Handle string type notes
-    if (typeof notes === 'string') {
+    // For string data, try to parse JSON
+    if (typeof notesData === 'string') {
       try {
-        const parsed = JSON.parse(notes);
-        return Array.isArray(parsed) ? parsed : [createSingleNote(notes)];
+        const parsed = JSON.parse(notesData);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        } else {
+          // Not a valid notes array
+          return [createSingleNote(notesData)];
+        }
       } catch (e) {
-        // If JSON parsing fails, treat as a single note
-        return [createSingleNote(notes)];
+        // If JSON parsing fails, treat as content for a single note
+        return [createSingleNote(notesData)];
       }
     }
     
-    // Default fallback
+    // Fallback for any other case
     return [];
   }
   

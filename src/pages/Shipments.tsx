@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Table, 
@@ -31,74 +32,27 @@ import {
   Filter, 
   Plus, 
   Search,
-  Truck
+  Truck,
+  Loader2
 } from 'lucide-react';
 import { ShipmentStatus } from '@/types';
 import ShipmentTypeBadge from '@/components/ShipmentTypeBadge';
 import ShipmentStatusBadge from '@/components/ShipmentStatusBadge';
+import { supabase } from "@/integrations/supabase/client";
+import { ImportDatabaseItem } from '@/hooks/useImports';
+import { ExportDatabaseItem } from '@/pages/Exports';
+import { mapStatusToShipmentStatus } from '@/lib/utils';
 
-const mockShipments = [
-  {
-    id: "IMP-001",
-    type: "import" as const,
-    lab: "Berlin Research Center",
-    courier: "Global Express",
-    status: "progress" as ShipmentStatus,
-    date: "2023-10-15",
-    animalType: "Rodents",
-    country: "Germany"
-  },
-  {
-    id: "EXP-001",
-    type: "export" as const,
-    lab: "Paris Research Center",
-    courier: "Global Express",
-    status: "progress" as ShipmentStatus,
-    date: "2023-10-15",
-    animalType: "Rodents",
-    country: "France"
-  },
-  {
-    id: "IMP-002",
-    type: "import" as const,
-    lab: "Tokyo Life Sciences",
-    courier: "Animal Transit Co.",
-    status: "complete" as ShipmentStatus,
-    date: "2023-09-28",
-    animalType: "Zebrafish",
-    country: "Japan"
-  },
-  {
-    id: "EXP-002",
-    type: "export" as const,
-    lab: "Oxford University",
-    courier: "Animal Transit Co.",
-    status: "complete" as ShipmentStatus,
-    date: "2023-09-28",
-    animalType: "Zebrafish",
-    country: "United Kingdom"
-  },
-  {
-    id: "IMP-003",
-    type: "import" as const,
-    lab: "Stockholm Institute",
-    courier: "Biolife Logistics",
-    status: "draft" as ShipmentStatus,
-    date: "2023-11-05",
-    animalType: "Rodents",
-    country: "Sweden"
-  },
-  {
-    id: "EXP-003",
-    type: "export" as const,
-    lab: "Madrid Institute",
-    courier: "Biolife Logistics",
-    status: "draft" as ShipmentStatus,
-    date: "2023-11-05",
-    animalType: "Rodents",
-    country: "Spain"
-  }
-];
+interface CombinedShipment {
+  id: string;
+  type: "import" | "export";
+  lab: string;
+  courier: string | null;
+  status: ShipmentStatus;
+  date: string;
+  animalType: string;
+  country: string;
+}
 
 const Shipments = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,12 +60,80 @@ const Shipments = () => {
   const [typeFilter, setTypeFilter] = useState<string>("");
   const [viewMode, setViewMode] = useState<'table' | 'card'>('table');
   const [activeTab, setActiveTab] = useState<string>("all");
+  const [shipments, setShipments] = useState<CombinedShipment[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const filteredShipments = mockShipments.filter((shipment) => {
+  // Fetch shipments from Supabase
+  useEffect(() => {
+    const fetchShipments = async () => {
+      setLoading(true);
+      try {
+        // Fetch completed imports
+        const { data: importsData, error: importsError } = await supabase
+          .from('imports')
+          .select('*')
+          .eq('status', 'complete');
+        
+        if (importsError) throw importsError;
+        
+        // Fetch completed exports
+        const { data: exportsData, error: exportsError } = await supabase
+          .from('exports')
+          .select('*')
+          .eq('status', 'complete');
+        
+        if (exportsError) throw exportsError;
+        
+        console.log('Fetched imports:', importsData?.length || 0);
+        console.log('Fetched exports:', exportsData?.length || 0);
+        
+        // Format imports
+        const formattedImports: CombinedShipment[] = (importsData || []).map((item: ImportDatabaseItem) => ({
+          id: item.import_number,
+          type: "import",
+          lab: item.sending_lab || "Unknown Lab",
+          courier: item.courier,
+          status: mapStatusToShipmentStatus(item.status),
+          date: item.arrival_date ? new Date(item.arrival_date).toISOString().split('T')[0] : 'Not scheduled',
+          animalType: item.animal_type,
+          country: "N/A" // Could extract country from lab if available
+        }));
+        
+        // Format exports
+        const formattedExports: CombinedShipment[] = (exportsData || []).map((item: ExportDatabaseItem) => {
+          // Extract country from destination lab if possible
+          const labParts = item.destination_lab?.split(',') || [];
+          const country = labParts.length > 1 ? labParts[1].trim() : "Unknown";
+          
+          return {
+            id: item.export_number,
+            type: "export",
+            lab: item.destination_lab || "Unknown Lab",
+            courier: item.courier,
+            status: mapStatusToShipmentStatus(item.status),
+            date: item.departure_date ? new Date(item.departure_date).toISOString().split('T')[0] : 'Not scheduled',
+            animalType: item.animal_type,
+            country: country
+          };
+        });
+        
+        // Combine shipments
+        setShipments([...formattedImports, ...formattedExports]);
+      } catch (error) {
+        console.error('Error fetching shipments:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchShipments();
+  }, []);
+  
+  const filteredShipments = shipments.filter((shipment) => {
     const matchesSearch = 
       shipment.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       shipment.lab.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      shipment.courier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (shipment.courier?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
       shipment.country.toLowerCase().includes(searchQuery.toLowerCase());
       
     const matchesStatus = statusFilter ? shipment.status === statusFilter : true;
@@ -156,9 +178,9 @@ const Shipments = () => {
       
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle>All Shipments</CardTitle>
+          <CardTitle>All Completed Shipments</CardTitle>
           <CardDescription>
-            View and manage all animal imports and exports
+            View and manage all completed animal imports and exports
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -218,17 +240,26 @@ const Shipments = () => {
               </div>
             </div>
             
-            <TabsContent value="all" className="m-0">
-              {renderShipmentsList(filteredShipments, viewMode)}
-            </TabsContent>
-            
-            <TabsContent value="imports" className="m-0">
-              {renderShipmentsList(filteredShipments, viewMode)}
-            </TabsContent>
-            
-            <TabsContent value="exports" className="m-0">
-              {renderShipmentsList(filteredShipments, viewMode)}
-            </TabsContent>
+            {loading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-muted-foreground">Loading shipments...</span>
+              </div>
+            ) : (
+              <>
+                <TabsContent value="all" className="m-0">
+                  {renderShipmentsList(filteredShipments, viewMode)}
+                </TabsContent>
+                
+                <TabsContent value="imports" className="m-0">
+                  {renderShipmentsList(filteredShipments, viewMode)}
+                </TabsContent>
+                
+                <TabsContent value="exports" className="m-0">
+                  {renderShipmentsList(filteredShipments, viewMode)}
+                </TabsContent>
+              </>
+            )}
           </Tabs>
         </CardContent>
       </Card>
@@ -236,7 +267,7 @@ const Shipments = () => {
   );
 };
 
-const renderShipmentsList = (shipments: typeof mockShipments, viewMode: 'table' | 'card') => {
+const renderShipmentsList = (shipments: CombinedShipment[], viewMode: 'table' | 'card') => {
   if (viewMode === 'table') {
     return (
       <div className="rounded-md border">
@@ -278,7 +309,7 @@ const renderShipmentsList = (shipments: typeof mockShipments, viewMode: 'table' 
                   </TableCell>
                   <TableCell>{shipment.lab}</TableCell>
                   <TableCell>{shipment.country}</TableCell>
-                  <TableCell>{shipment.courier}</TableCell>
+                  <TableCell>{shipment.courier || 'Not specified'}</TableCell>
                   <TableCell>
                     <ShipmentStatusBadge status={shipment.status} />
                   </TableCell>
@@ -328,7 +359,7 @@ const renderShipmentsList = (shipments: typeof mockShipments, viewMode: 'table' 
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">Courier:</span>
-                    <span className="text-sm font-medium">{shipment.courier}</span>
+                    <span className="text-sm font-medium">{shipment.courier || 'Not specified'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm text-muted-foreground">
