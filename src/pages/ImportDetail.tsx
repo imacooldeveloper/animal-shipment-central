@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
@@ -19,6 +19,7 @@ const ImportDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState<any>(null);
 
   // Fetch import details
   const { data: importData, isLoading, error } = useQuery({
@@ -38,9 +39,36 @@ const ImportDetail = () => {
     }
   });
 
+  // Parse checklist from importData
+  const parseChecklist = (): ImportChecklist => {
+    if (!importData || !importData.checklist) {
+      return DEFAULT_CHECKLIST;
+    }
+    
+    try {
+      const parsedChecklist = JSON.parse(importData.checklist);
+      return { ...DEFAULT_CHECKLIST, ...parsedChecklist };
+    } catch (e) {
+      console.error('Error parsing checklist JSON:', e);
+      return DEFAULT_CHECKLIST;
+    }
+  };
+
+  const checklist = parseChecklist();
+  
+  // Calculate progress percentage
+  const calculateProgress = (): number => {
+    const totalItems = Object.keys(checklist).length;
+    const completedItems = Object.values(checklist).filter(Boolean).length;
+    return Math.round((completedItems / totalItems) * 100);
+  };
+
   // Update import mutation
   const updateImportMutation = useMutation({
     mutationFn: async (updatedImport: any) => {
+      // Store formData for checklist auto-updates
+      setFormData(updatedImport);
+      
       const { error } = await supabase
         .from('imports')
         .update({
@@ -73,6 +101,19 @@ const ImportDetail = () => {
     }
   });
 
+  // Load formData initially when importData is available
+  useEffect(() => {
+    if (importData && !formData) {
+      setFormData({
+        sendingLab: importData.sending_lab,
+        courier: importData.courier,
+        arrivalDate: importData.arrival_date,
+        labContactName: importData.lab_contact_name,
+        labContactEmail: importData.lab_contact_email,
+      });
+    }
+  }, [importData, formData]);
+
   const handleGoBack = () => {
     navigate('/imports');
   };
@@ -87,21 +128,6 @@ const ImportDetail = () => {
 
   const handleSave = (formData: any) => {
     updateImportMutation.mutate(formData);
-  };
-
-  // Parse checklist from importData
-  const parseChecklist = (): ImportChecklist => {
-    if (!importData || !importData.checklist) {
-      return DEFAULT_CHECKLIST;
-    }
-    
-    try {
-      const parsedChecklist = JSON.parse(importData.checklist);
-      return { ...DEFAULT_CHECKLIST, ...parsedChecklist };
-    } catch (e) {
-      console.error('Error parsing checklist JSON:', e);
-      return DEFAULT_CHECKLIST;
-    }
   };
 
   if (isLoading) {
@@ -135,6 +161,8 @@ const ImportDetail = () => {
     );
   }
 
+  const progressValue = calculateProgress();
+
   return (
     <div className="container mx-auto px-4 py-6">
       <ImportActionBar 
@@ -144,6 +172,7 @@ const ImportDetail = () => {
         onGoBack={handleGoBack}
         onToggleEdit={toggleEditMode}
         onCancel={handleCancel}
+        progressValue={progressValue}
       />
 
       <div className="grid gap-6 md:grid-cols-6">
@@ -189,6 +218,7 @@ const ImportDetail = () => {
           <ImportChecklistCard 
             importId={importData.import_number}
             initialChecklist={parseChecklist()}
+            formData={formData}
           />
         </div>
       </div>

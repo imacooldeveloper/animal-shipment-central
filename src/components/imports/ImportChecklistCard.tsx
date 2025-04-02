@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ChecklistItem {
@@ -71,9 +72,10 @@ const CHECKLIST_ITEMS: ChecklistItem[] = [
 interface ImportChecklistCardProps {
   importId: string;
   initialChecklist: ImportChecklist;
+  formData?: any;
 }
 
-const ImportChecklistCard = ({ importId, initialChecklist }: ImportChecklistCardProps) => {
+const ImportChecklistCard = ({ importId, initialChecklist, formData }: ImportChecklistCardProps) => {
   const [checklist, setChecklist] = useState<ImportChecklist>(initialChecklist);
   const queryClient = useQueryClient();
 
@@ -100,6 +102,33 @@ const ImportChecklistCard = ({ importId, initialChecklist }: ImportChecklistCard
     }
   });
 
+  // Effect to auto-update checklist based on form data
+  useState(() => {
+    if (formData) {
+      let updatedChecklist = { ...checklist };
+      
+      // Update checklist based on form data
+      if (formData.sendingLab) {
+        updatedChecklist.transferForms = true;
+      }
+      
+      if (formData.courier) {
+        updatedChecklist.courier = true;
+      }
+      
+      if (formData.arrivalDate) {
+        updatedChecklist.animalReceipt = true;
+      }
+      
+      if (formData.labContactEmail && formData.labContactName) {
+        // Both contact fields are filled, mark related checklist items
+        updatedChecklist.importPermit = true;
+      }
+      
+      setChecklist(updatedChecklist);
+    }
+  });
+
   const updateChecklistItem = (key: keyof ImportChecklist, value: boolean) => {
     setChecklist(prev => ({
       ...prev,
@@ -116,6 +145,8 @@ const ImportChecklistCard = ({ importId, initialChecklist }: ImportChecklistCard
     const completedItems = Object.values(checklist).filter(Boolean).length;
     return Math.round((completedItems / totalItems) * 100);
   };
+
+  const progress = calculateProgress();
 
   return (
     <Card>
@@ -156,15 +187,17 @@ const ImportChecklistCard = ({ importId, initialChecklist }: ImportChecklistCard
         
         <Separator className="my-6" />
         
-        <div className="flex justify-between items-center">
+        <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium">Checklist Status</p>
-            <p className="text-sm text-muted-foreground">
-              {calculateProgress()}% Complete
-            </p>
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-sm font-medium">Checklist Status</p>
+              <p className="text-sm font-medium">{progress}% Complete</p>
+            </div>
+            <Progress value={progress} className="h-2" />
           </div>
+          
           <Button 
-            className="gap-2" 
+            className="w-full gap-2" 
             onClick={saveChecklist}
             disabled={updateChecklistMutation.isPending}
           >
