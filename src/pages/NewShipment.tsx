@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -121,6 +120,10 @@ const NewShipment = () => {
     delete formattedData.departureDate;
     delete formattedData.documents;
     delete formattedData.type;
+    delete formattedData.courierOther;
+    delete formattedData.statusOther;
+    
+    console.log('Formatted export data for DB insertion:', formattedData);
     
     const response = await supabase
       .from('exports')
@@ -142,7 +145,10 @@ const NewShipment = () => {
         checklist: JSON.stringify(checklist)
       } as any);
       
-    if (response.error) throw response.error;
+    if (response.error) {
+      console.error('Supabase error details:', response.error);
+      throw response.error;
+    }
     return response;
   };
 

@@ -8,7 +8,7 @@ const Index = () => {
     total: 15,
     draft: 3,
     progress: 8,
-    complete: 0
+    complete: 4
   };
 
   return (

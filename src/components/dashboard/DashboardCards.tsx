@@ -69,8 +69,8 @@ const DashboardCards = ({ counts }: DashboardCardsProps) => {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
       <DashboardCard 
-        title="Shipments" 
-        value={counts.total} 
+        title="Completed Shipments" 
+        value={counts.complete} 
         color="rose" 
         icon={<Box className="h-6 w-6 text-rose-700" />} 
         path="/shipments"
