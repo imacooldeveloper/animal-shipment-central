@@ -22,22 +22,30 @@ const NewShipment = () => {
   const handleCancel = () => navigate(-1);
 
   const handleSubmit = async (data: any) => {
+    console.log('Form data received for submission:', data);
     setIsSubmitting(true);
     setFormData(data);
-    console.log('Shipment data submitted:', data);
     
     try {
+      let response;
+      
       if (shipmentType === 'import') {
-        await handleImportSubmit(data);
+        response = await handleImportSubmit(data);
       } else {
-        await handleExportSubmit(data);
+        response = await handleExportSubmit(data);
+      }
+      
+      console.log('Submission response:', response);
+      
+      if (response.error) {
+        throw response.error;
       }
       
       toast.success(`${shipmentType === 'import' ? 'Import' : 'Export'} successfully created!`);
       navigate(`/${shipmentType}s`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error saving ${shipmentType}:`, error);
-      toast.error(`Failed to create ${shipmentType}. Please try again.`);
+      toast.error(`Failed to create ${shipmentType}: ${error.message || 'Please try again'}`);
     } finally {
       setIsSubmitting(false);
     }

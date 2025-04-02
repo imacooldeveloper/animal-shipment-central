@@ -84,6 +84,7 @@ export const handleExportSubmit = async (data: any) => {
   
   console.log('Formatted export data for DB insertion:', formattedData);
   
+  // Create the export object matching the database schema
   const exportData = {
     export_number: formattedData.exportNumber,
     sending_lab: formattedData.sendingLab,
@@ -102,13 +103,20 @@ export const handleExportSubmit = async (data: any) => {
     checklist: JSON.stringify(checklist)
   };
   
-  const response = await supabase
-    .from('exports')
-    .insert(exportData);
-    
-  if (response.error) {
-    console.error('Supabase error details:', response.error);
-    throw response.error;
+  console.log('Final export data being sent to Supabase:', exportData);
+  
+  try {
+    const response = await supabase
+      .from('exports')
+      .insert(exportData);
+      
+    if (response.error) {
+      console.error('Supabase error details:', response.error);
+      throw response.error;
+    }
+    return response;
+  } catch (error) {
+    console.error('Error in handleExportSubmit:', error);
+    throw error;
   }
-  return response;
 };
