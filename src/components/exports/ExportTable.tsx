@@ -74,7 +74,7 @@ const ExportTable = ({ exports }: ExportTableProps) => {
             <TableRow key={exp.id}>
               <TableCell className="font-medium">
                 <Link 
-                  to={`/shipments/${exp.id}`}
+                  to={`/exports/${exp.id}`}
                   className="text-primary hover:underline"
                 >
                   {exp.id}

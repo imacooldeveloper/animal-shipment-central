@@ -15,6 +15,7 @@ import Layout from "./components/Layout";
 import NotFound from "./pages/NotFound";
 import Imports from "./pages/Imports";
 import ImportDetail from "./pages/ImportDetail";
+import ExportDetail from "./pages/ExportDetail";
 import Exports from "./pages/Exports";
 import Shipments from "./pages/Shipments";
 import NewShipment from "./pages/NewShipment";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="imports/:id" element={<ImportDetail />} />
             <Route path="exports" element={<Exports />} />
             <Route path="exports/new" element={<Navigate to="/shipments/new?type=export" replace />} />
+            <Route path="exports/:id" element={<ExportDetail />} />
             <Route path="transfer-forms" element={<TransferForms />} />
             <Route path="transfer-forms/:id" element={<FormDetail />} />
             <Route path="documents" element={<Documents />} />

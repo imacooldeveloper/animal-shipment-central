@@ -62,6 +62,8 @@ interface DashboardCardsProps {
     draft: number;
     progress: number;
     complete: number;
+    imports: number;
+    exports: number;
   };
 }
 
@@ -77,14 +79,14 @@ const DashboardCards = ({ counts }: DashboardCardsProps) => {
       />
       <DashboardCard 
         title="Imports" 
-        value={counts.draft} 
+        value={counts.imports || counts.draft} 
         color="emerald" 
         icon={<Users className="h-6 w-6 text-emerald-700" />} 
         path="/imports"
       />
       <DashboardCard 
         title="Exports" 
-        value={counts.progress} 
+        value={counts.exports || counts.progress} 
         color="blue" 
         icon={<Calendar className="h-6 w-6 text-blue-700" />} 
         path="/exports"

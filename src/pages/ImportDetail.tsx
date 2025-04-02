@@ -1,16 +1,29 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from "sonner";
+import { Trash } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { supabase } from '@/integrations/supabase/client';
 import { ImportDatabaseItem } from '@/hooks/useImports';
 import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
 import ImportChecklistCard, { ImportChecklist, DEFAULT_CHECKLIST } from '@/components/imports/ImportChecklistCard';
 import ImportActionBar from '@/components/imports/ImportActionBar';
+import ShipmentNotes from '@/components/shipments/ShipmentNotes';
 
 const ImportDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +31,7 @@ const ImportDetail = () => {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<any>(null);
+  const [notes, setNotes] = useState<any[]>([]);
 
   // Fetch import details
   const { 
@@ -28,6 +42,30 @@ const ImportDetail = () => {
 
   // Update import mutation
   const updateImportMutation = useUpdateImportMutation(id, queryClient, () => setIsEditing(false));
+
+  // Delete import mutation
+  const deleteImportMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) throw new Error('Import ID is required');
+      
+      console.log("Deleting import with ID:", id);
+      const { error } = await supabase
+        .from('imports')
+        .delete()
+        .eq('import_number', id);
+      
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      toast.success('Import shipment deleted successfully');
+      navigate('/imports');
+    },
+    onError: (error) => {
+      console.error('Error deleting import:', error);
+      toast.error('Failed to delete import shipment');
+    }
+  });
 
   // Load formData initially when importData is available
   useEffect(() => {
@@ -42,6 +80,30 @@ const ImportDetail = () => {
         animalType: importData.animal_type,
         quantity: importData.quantity,
       });
+
+      // Parse notes if they exist
+      if (importData.notes) {
+        try {
+          const parsedNotes = JSON.parse(importData.notes);
+          if (Array.isArray(parsedNotes)) {
+            setNotes(parsedNotes);
+          } else {
+            // If notes is not an array but a string, create a single note object
+            setNotes([{
+              id: '1',
+              content: importData.notes,
+              created_at: importData.created_at
+            }]);
+          }
+        } catch (e) {
+          // If parsing fails, treat as a single note
+          setNotes([{
+            id: '1',
+            content: importData.notes,
+            created_at: importData.created_at
+          }]);
+        }
+      }
     }
   }, [importData, formData]);
 
@@ -74,6 +136,7 @@ const ImportDetail = () => {
   const toggleEditMode = () => setIsEditing(!isEditing);
   const handleCancel = () => setIsEditing(false);
   const handleSave = (formData: any) => updateImportMutation.mutate(formData);
+  const handleDelete = () => deleteImportMutation.mutate();
 
   // Loading state
   if (isLoading) {
@@ -91,15 +154,41 @@ const ImportDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <ImportActionBar 
-        importNumber={importData.import_number}
-        isEditing={isEditing}
-        isPending={updateImportMutation.isPending}
-        onGoBack={handleGoBack}
-        onToggleEdit={toggleEditMode}
-        onCancel={handleCancel}
-        progressValue={progressValue}
-      />
+      <div className="flex justify-between items-center mb-6">
+        <ImportActionBar 
+          importNumber={importData.import_number}
+          isEditing={isEditing}
+          isPending={updateImportMutation.isPending}
+          onGoBack={handleGoBack}
+          onToggleEdit={toggleEditMode}
+          onCancel={handleCancel}
+          progressValue={progressValue}
+        />
+
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">
+              <Trash className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Import</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                import shipment and all associated data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-6">
         <div className="md:col-span-4">
@@ -122,6 +211,14 @@ const ImportDetail = () => {
             formData={formData}
           />
         </div>
+      </div>
+
+      <div className="mt-6">
+        <ShipmentNotes 
+          shipmentId={importData.import_number} 
+          shipmentType="import" 
+          existingNotes={notes}
+        />
       </div>
     </div>
   );

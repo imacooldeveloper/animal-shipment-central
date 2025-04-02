@@ -39,7 +39,7 @@ const ExportCards = ({ exports }: ExportCardsProps) => {
         <Card key={exp.id} className="overflow-hidden">
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
-              <Link to={`/shipments/${exp.id}`}>
+              <Link to={`/exports/${exp.id}`}>
                 <CardTitle className="text-primary hover:underline">
                   {exp.id}
                 </CardTitle>

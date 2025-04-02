@@ -27,7 +27,9 @@ const Dashboard = () => {
     total: 0,
     draft: 0,
     progress: 0,
-    complete: 0
+    complete: 0,
+    imports: 0,
+    exports: 0
   });
 
   // Fetch imports using React Query
@@ -89,6 +91,8 @@ const Dashboard = () => {
   // Update filtered shipments and counts when data or filters change
   useEffect(() => {
     const allShipments = formatDashboardData();
+    const imports = importsQuery.data || [];
+    const exports = exportsQuery.data || [];
     
     // Apply filters
     const filtered = allShipments.filter(shipment => {
@@ -111,6 +115,8 @@ const Dashboard = () => {
       draft: allShipments.filter(s => s.status === 'draft').length,
       progress: allShipments.filter(s => s.status === 'progress').length,
       complete: allShipments.filter(s => s.status === 'complete').length,
+      imports: imports.length,
+      exports: exports.length
     });
   }, [importsQuery.data, exportsQuery.data, searchTerm, statusFilter, typeFilter]);
 
