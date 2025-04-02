@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Box, Clipboard, Trash } from 'lucide-react';
@@ -15,6 +14,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ShipmentDetailContent from '@/components/shipments/ShipmentDetailContent';
 import ShipmentNotes from '@/components/shipments/ShipmentNotes';
 import { Shipment } from '@/types';
@@ -62,121 +62,129 @@ const ShipmentDetail = () => {
             .from('imports')
             .select('*')
             .eq('import_number', id)
-            .single();
+            .maybeSingle();
           
-          if (error) throw error;
+          if (error) {
+            console.error("Error fetching import:", error);
+            throw error;
+          }
+          
+          if (!data) {
+            console.error("Import not found:", id);
+            throw new Error(`Import ${id} not found`);
+          }
           
           console.log('Fetched import data:', data);
           
-          if (data) {
-            setImportData(data);
-            
-            // Handle notes
-            if (data.notes) {
-              setNotes(data.notes);
-            }
-            
-            // Parse checklist if it exists
-            const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
-            
-            // Map the database data to our Shipment type
-            setShipment({
-              id: data.import_number,
-              type: 'import',
-              status: data.status === 'complete' ? 'complete' : 
-                     data.status === 'in-progress' ? 'progress' : 'draft',
-              country: 'N/A', // Use a more meaningful value if available
-              lastUpdated: new Date(data.created_at).toLocaleDateString(),
-              animalType: data.animal_type,
-              lab: data.sending_lab,
-              arrivalDate: data.arrival_date,
-              courier: data.courier,
-              checklist: parsedChecklist || {
-                transferForms: false,
-                healthCert: false,
-                importPermit: false,
-                courier: false,
-                animalReceipt: false,
-                facilitiesReady: false
-              },
-              documents: [],
-              timeline: [],
-              labContactName: data.lab_contact_name,
-              labContactEmail: data.lab_contact_email
-            });
-            
-            setChecklist(parsedChecklist || {
+          setImportData(data);
+          
+          // Handle notes
+          if (data.notes) {
+            setNotes(data.notes);
+          }
+          
+          // Parse checklist if it exists
+          const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
+          
+          // Map the database data to our Shipment type
+          setShipment({
+            id: data.import_number,
+            type: 'import',
+            status: data.status === 'complete' ? 'complete' : 
+                   data.status === 'in-progress' ? 'progress' : 'draft',
+            country: 'N/A', // Use a more meaningful value if available
+            lastUpdated: new Date(data.created_at).toLocaleDateString(),
+            animalType: data.animal_type,
+            lab: data.sending_lab,
+            arrivalDate: data.arrival_date,
+            courier: data.courier,
+            checklist: parsedChecklist || {
               transferForms: false,
               healthCert: false,
               importPermit: false,
               courier: false,
               animalReceipt: false,
               facilitiesReady: false
-            });
-          } else {
-            setError('Import not found');
-          }
+            },
+            documents: [],
+            timeline: [],
+            labContactName: data.lab_contact_name,
+            labContactEmail: data.lab_contact_email
+          });
+          
+          setChecklist(parsedChecklist || {
+            transferForms: false,
+            healthCert: false,
+            importPermit: false,
+            courier: false,
+            animalReceipt: false,
+            facilitiesReady: false
+          });
         } else if (isExport) {
           // Fetch export details
           const { data, error } = await supabase
             .from('exports')
             .select('*')
             .eq('export_number', id)
-            .single();
+            .maybeSingle();
           
-          if (error) throw error;
+          if (error) {
+            console.error("Error fetching export:", error);
+            throw error;
+          }
+          
+          if (!data) {
+            console.error("Export not found:", id);
+            throw new Error(`Export ${id} not found`);
+          }
           
           console.log('Fetched export data:', data);
           
-          if (data) {
-            setExportData(data);
-            
-            // Handle notes
-            if (data.notes) {
-              setNotes(data.notes);
-            }
-            
-            // Parse checklist if it exists
-            const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
-            
-            // Map the database data to our Shipment type
-            setShipment({
-              id: data.export_number,
-              type: 'export',
-              status: data.status === 'complete' ? 'complete' : 
-                     data.status === 'in-progress' ? 'progress' : 'draft',
-              country: data.destination_lab.split(',').length > 1 ? 
-                      data.destination_lab.split(',')[1].trim() : 'Unknown',
-              lastUpdated: new Date(data.created_at).toLocaleDateString(),
-              animalType: data.animal_type,
-              lab: data.destination_lab,
-              departureDate: data.departure_date,
-              courier: data.courier,
-              checklist: parsedChecklist || {
-                transferForms: false,
-                healthCert: false,
-                exportPermit: false,
-                courier: false,
-                pickupDate: false,
-                packageReady: false
-              },
-              documents: [],
-              timeline: [],
-              labContactName: data.lab_contact_name,
-              labContactEmail: data.lab_contact_email
-            });
-            
-            setChecklist(parsedChecklist || {
+          setExportData(data);
+          
+          // Handle notes
+          if (data.notes) {
+            setNotes(data.notes);
+          }
+          
+          // Parse checklist if it exists
+          const parsedChecklist = data.checklist ? JSON.parse(data.checklist) : null;
+          
+          // Map the database data to our Shipment type
+          setShipment({
+            id: data.export_number,
+            type: 'export',
+            status: data.status === 'complete' ? 'complete' : 
+                   data.status === 'in-progress' ? 'progress' : 'draft',
+            country: data.destination_lab.split(',').length > 1 ? 
+                    data.destination_lab.split(',')[1].trim() : 'Unknown',
+            lastUpdated: new Date(data.created_at).toLocaleDateString(),
+            animalType: data.animal_type,
+            lab: data.destination_lab,
+            departureDate: data.departure_date,
+            courier: data.courier,
+            checklist: parsedChecklist || {
               transferForms: false,
               healthCert: false,
               exportPermit: false,
               courier: false,
               pickupDate: false,
               packageReady: false
-            });
-          } else {
-            setError('Export not found');
-          }
+            },
+            documents: [],
+            timeline: [],
+            labContactName: data.lab_contact_name,
+            labContactEmail: data.lab_contact_email
+          });
+          
+          setChecklist(parsedChecklist || {
+            transferForms: false,
+            healthCert: false,
+            exportPermit: false,
+            courier: false,
+            pickupDate: false,
+            packageReady: false
+          });
         } else {
           setError('Invalid shipment ID format');
         }
@@ -274,16 +282,22 @@ const ShipmentDetail = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
-        <div className="text-center py-12 border rounded-md">
-          <Box className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Shipment Not Found</h2>
-          <p className="text-muted-foreground mb-4">
-            {error || "We couldn't find the shipment you're looking for."}
-          </p>
-          <Button onClick={() => navigate(-1)}>
-            Return to Previous Page
-          </Button>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Shipment Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8">
+              <Box className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">
+                {error || "We couldn't find the shipment you're looking for."}
+              </p>
+              <Button onClick={() => navigate(-1)}>
+                Return to Previous Page
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -340,7 +354,7 @@ const ShipmentDetail = () => {
           <ShipmentNotes 
             shipmentId={importData.import_number} 
             shipmentType="import" 
-            existingNotes={notes}
+            existingNotes={importData.notes}
           />
         </div>
       ) : isExport && exportData ? (
@@ -349,7 +363,7 @@ const ShipmentDetail = () => {
           <ShipmentNotes 
             shipmentId={exportData.export_number} 
             shipmentType="export" 
-            existingNotes={notes}
+            existingNotes={exportData.notes}
           />
         </div>
       ) : (

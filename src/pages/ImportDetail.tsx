@@ -37,7 +37,8 @@ const ImportDetail = () => {
   const { 
     data: importData, 
     isLoading, 
-    error 
+    error,
+    isError
   } = useImportQuery(id);
 
   // Update import mutation
@@ -143,8 +144,8 @@ const ImportDetail = () => {
     return <LoadingState />;
   }
 
-  // Error state
-  if (error || !importData) {
+  // Error state or not found state
+  if (isError || !importData) {
     console.error("Error loading import:", error);
     return <ErrorState onGoBack={handleGoBack} error={error} />;
   }
@@ -217,7 +218,7 @@ const ImportDetail = () => {
         <ShipmentNotes 
           shipmentId={importData.import_number} 
           shipmentType="import" 
-          existingNotes={notes}
+          existingNotes={importData.notes}
         />
       </div>
     </div>
@@ -240,13 +241,19 @@ const LoadingState = () => (
 const ErrorState = ({ onGoBack, error }: { onGoBack: () => void, error: any }) => (
   <div className="container mx-auto px-4 py-6">
     <Card>
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center py-12">
-          <p className="text-destructive mb-4">Error loading import details</p>
-          {error && <p className="text-sm text-muted-foreground mb-4">Details: {error.message || JSON.stringify(error)}</p>}
-          <button onClick={onGoBack} className="flex items-center gap-2 px-4 py-2 rounded-md border">
+      <CardHeader>
+        <CardTitle className="text-destructive">Error loading import details</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-2">
+        <div className="flex flex-col items-center py-8">
+          <p className="text-destructive mb-4">
+            {error instanceof Error 
+              ? error.message 
+              : error?.message || "Details: JSON object requested, multiple (or no) rows returned"}
+          </p>
+          <Button onClick={onGoBack} className="gap-2">
             Back to Imports
-          </button>
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -305,19 +312,29 @@ const useImportQuery = (id: string | undefined) => {
       if (!id) throw new Error('Import ID is required');
       
       console.log("Fetching import with ID:", id);
-      const { data, error } = await supabase
-        .from('imports')
-        .select('*')
-        .eq('import_number', id)
-        .single();
-      
-      if (error) {
-        console.error("Error fetching import:", error);
-        throw error;
+      try {
+        const { data, error, count } = await supabase
+          .from('imports')
+          .select('*')
+          .eq('import_number', id)
+          .maybeSingle();
+        
+        if (error) {
+          console.error("Supabase error fetching import:", error);
+          throw new Error(error.message);
+        }
+        
+        if (!data) {
+          console.error("Import not found:", id);
+          throw new Error(`Import ${id} not found`);
+        }
+        
+        console.log("Fetched import data:", data);
+        return data as ImportDatabaseItem;
+      } catch (err) {
+        console.error("Error in import query:", err);
+        throw err;
       }
-      
-      console.log("Fetched import data:", data);
-      return data as ImportDatabaseItem;
     },
     retry: 1,
     refetchOnWindowFocus: false

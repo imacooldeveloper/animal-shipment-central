@@ -24,13 +24,38 @@ interface ShipmentNotesProps {
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
-  const parsedInitialNotes: Note[] = typeof existingNotes === 'string' ? 
-    (tryParseJSON(existingNotes) || []) : 
-    existingNotes;
+  const parsedInitialNotes = parseNotes(existingNotes);
   
   const [notes, setNotes] = useState<Note[]>(parsedInitialNotes);
   const [newNote, setNewNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Helper function to safely parse notes
+  function parseNotes(notesData: string | Note[]): Note[] {
+    if (Array.isArray(notesData)) {
+      return notesData;
+    }
+    
+    if (!notesData) return [];
+    
+    try {
+      const parsed = JSON.parse(notesData);
+      return Array.isArray(parsed) ? parsed : [createSingleNote(notesData)];
+    } catch (e) {
+      // If parsing fails, treat as a single note
+      return [createSingleNote(notesData)];
+    }
+  }
+  
+  // Helper function to create a single note from string content
+  function createSingleNote(content: string): Note {
+    return {
+      id: crypto.randomUUID(),
+      content: content,
+      created_at: new Date().toISOString(),
+      user_name: 'User'
+    };
+  }
 
   // Helper function to safely parse JSON
   function tryParseJSON(jsonString: string): Note[] | null {
