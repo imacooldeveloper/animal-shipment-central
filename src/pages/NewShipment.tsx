@@ -21,13 +21,9 @@ const NewShipment = () => {
   const [formData, setFormData] = useState<any>(null);
   const navigate = useNavigate();
 
-  const handleCancel = () => {
-    navigate(-1);
-  };
+  const handleCancel = () => navigate(-1);
 
-  const handleFormChange = (data: any) => {
-    setFormData(data);
-  };
+  const handleFormChange = (data: any) => setFormData(data);
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -35,94 +31,100 @@ const NewShipment = () => {
     console.log('Shipment data submitted:', data);
     
     try {
-      let response;
-      
       if (shipmentType === 'import') {
-        // Format the arrival_date for Postgres
-        const formattedData = {
-          ...data,
-          arrival_date: data.arrivalDate ? new Date(data.arrivalDate).toISOString().split('T')[0] : null
-        };
-        
-        // Create a checklist based on form data
-        const checklist = { ...DEFAULT_CHECKLIST };
-        
-        // Auto-populate checklist based on form data
-        if (formattedData.sending_lab) checklist.transferForms = true;
-        if (formattedData.courier) checklist.courier = true;
-        if (formattedData.arrival_date) checklist.animalReceipt = true;
-        if (formattedData.lab_contact_email && formattedData.lab_contact_name) {
-          checklist.importPermit = true;
-        }
-        
-        // Remove fields that aren't in the database schema
-        delete formattedData.arrivalDate;
-        delete formattedData.documents;
-        delete formattedData.type;
-        
-        // Use type assertion to tell TypeScript this is valid
-        response = await supabase
-          .from('imports')
-          .insert({
-            import_number: formattedData.importNumber,
-            sending_lab: formattedData.sendingLab,
-            protocol_number: formattedData.protocolNumber,
-            courier: formattedData.courier,
-            courier_account_number: formattedData.courierAccountNumber,
-            arrival_date: formattedData.arrival_date,
-            animal_type: formattedData.animalType,
-            quantity: formattedData.quantity,
-            status: formattedData.status,
-            notes: formattedData.notes,
-            lab_contact_name: formattedData.labContactName,
-            lab_contact_email: formattedData.labContactEmail,
-            checklist: JSON.stringify(checklist)
-          } as any);
+        await handleImportSubmit(data);
       } else {
-        // Format the departure_date for Postgres
-        const formattedData = {
-          ...data,
-          departure_date: data.departureDate ? new Date(data.departureDate).toISOString().split('T')[0] : null
-        };
-        
-        // Remove fields that aren't in the database schema
-        delete formattedData.departureDate;
-        delete formattedData.documents;
-        delete formattedData.type;
-        
-        // Use type assertion to tell TypeScript this is valid
-        response = await supabase
-          .from('exports')
-          .insert({
-            export_number: formattedData.exportNumber,
-            sending_lab: formattedData.sendingLab,
-            destination_lab: formattedData.destinationLab,
-            protocol_number: formattedData.protocolNumber,
-            courier: formattedData.courier,
-            courier_account_number: formattedData.courierAccountNumber,
-            departure_date: formattedData.departure_date,
-            animal_type: formattedData.animalType,
-            quantity: formattedData.quantity,
-            status: formattedData.status,
-            tracking_number: formattedData.trackingNumber,
-            notes: formattedData.notes,
-            lab_contact_name: formattedData.labContactName,
-            lab_contact_email: formattedData.labContactEmail
-          } as any);
-      }
-      
-      if (response.error) {
-        throw response.error;
+        await handleExportSubmit(data);
       }
       
       toast.success(`${shipmentType === 'import' ? 'Import' : 'Export'} successfully created!`);
       navigate(`/${shipmentType}s`);
     } catch (error) {
-      console.error('Error saving shipment:', error);
+      console.error(`Error saving ${shipmentType}:`, error);
       toast.error(`Failed to create ${shipmentType}. Please try again.`);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleImportSubmit = async (data: any) => {
+    // Format the arrival_date for Postgres
+    const formattedData = {
+      ...data,
+      arrival_date: data.arrivalDate ? new Date(data.arrivalDate).toISOString().split('T')[0] : null
+    };
+    
+    // Create a checklist based on form data
+    const checklist = { ...DEFAULT_CHECKLIST };
+    
+    // Auto-populate checklist based on form data
+    if (formattedData.sending_lab) checklist.transferForms = true;
+    if (formattedData.courier) checklist.courier = true;
+    if (formattedData.arrival_date) checklist.animalReceipt = true;
+    if (formattedData.lab_contact_email && formattedData.lab_contact_name) {
+      checklist.importPermit = true;
+    }
+    
+    // Remove fields that aren't in the database schema
+    delete formattedData.arrivalDate;
+    delete formattedData.documents;
+    delete formattedData.type;
+    
+    const response = await supabase
+      .from('imports')
+      .insert({
+        import_number: formattedData.importNumber,
+        sending_lab: formattedData.sendingLab,
+        protocol_number: formattedData.protocolNumber,
+        courier: formattedData.courier,
+        courier_account_number: formattedData.courierAccountNumber,
+        arrival_date: formattedData.arrival_date,
+        animal_type: formattedData.animalType,
+        quantity: formattedData.quantity,
+        status: formattedData.status,
+        notes: formattedData.notes,
+        lab_contact_name: formattedData.labContactName,
+        lab_contact_email: formattedData.labContactEmail,
+        checklist: JSON.stringify(checklist)
+      } as any);
+      
+    if (response.error) throw response.error;
+    return response;
+  };
+
+  const handleExportSubmit = async (data: any) => {
+    // Format the departure_date for Postgres
+    const formattedData = {
+      ...data,
+      departure_date: data.departureDate ? new Date(data.departureDate).toISOString().split('T')[0] : null
+    };
+    
+    // Remove fields that aren't in the database schema
+    delete formattedData.departureDate;
+    delete formattedData.documents;
+    delete formattedData.type;
+    
+    const response = await supabase
+      .from('exports')
+      .insert({
+        export_number: formattedData.exportNumber,
+        sending_lab: formattedData.sendingLab,
+        destination_lab: formattedData.destinationLab,
+        protocol_number: formattedData.protocolNumber,
+        courier: formattedData.courier,
+        courier_account_number: formattedData.courierAccountNumber,
+        departure_date: formattedData.departure_date,
+        animal_type: formattedData.animalType,
+        quantity: formattedData.quantity,
+        status: formattedData.status,
+        tracking_number: formattedData.trackingNumber,
+        notes: formattedData.notes,
+        lab_contact_name: formattedData.labContactName,
+        lab_contact_email: formattedData.labContactEmail
+      } as any);
+      
+    if (response.error) throw response.error;
+    return response;
   };
 
   return (
@@ -136,8 +138,8 @@ const NewShipment = () => {
       
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4">
               <CardTitle>Shipment Details</CardTitle>
               <CardDescription>
                 Fill out the details for your new shipment
@@ -149,12 +151,12 @@ const NewShipment = () => {
                 onValueChange={(value) => setShipmentType(value as 'import' | 'export')}
                 className="w-full"
               >
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-2 mb-8">
                   <TabsTrigger value="import">Import Shipment</TabsTrigger>
                   <TabsTrigger value="export">Export Shipment</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="import">
+                <TabsContent value="import" className="pt-2">
                   <ImportShipmentForm 
                     onSubmit={handleSubmit} 
                     onCancel={handleCancel} 
@@ -162,7 +164,7 @@ const NewShipment = () => {
                   />
                 </TabsContent>
                 
-                <TabsContent value="export">
+                <TabsContent value="export" className="pt-2">
                   <ExportShipmentForm 
                     onSubmit={handleSubmit} 
                     onCancel={handleCancel} 

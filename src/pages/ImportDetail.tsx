@@ -1,16 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft } from 'lucide-react';
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from '@/integrations/supabase/client';
+import { ImportDatabaseItem } from '@/hooks/useImports';
 import ImportShipmentView from '@/components/imports/ImportShipmentView';
 import ImportShipmentForm from '@/components/shipments/ImportShipmentForm';
-import { ImportDatabaseItem } from '@/hooks/useImports';
 import ImportChecklistCard, { DEFAULT_CHECKLIST, ImportChecklist } from '@/components/imports/ImportChecklistCard';
 import ImportActionBar from '@/components/imports/ImportActionBar';
 
@@ -22,22 +19,27 @@ const ImportDetail = () => {
   const [formData, setFormData] = useState<any>(null);
 
   // Fetch import details
-  const { data: importData, isLoading, error } = useQuery({
-    queryKey: ['import', id],
-    queryFn: async () => {
-      if (!id) throw new Error('Import ID is required');
-      
-      const { data, error } = await supabase
-        .from('imports')
-        .select('*')
-        .eq('import_number', id)
-        .single();
-      
-      if (error) throw error;
-      
-      return data as ImportDatabaseItem;
+  const { 
+    data: importData, 
+    isLoading, 
+    error 
+  } = useImportQuery(id);
+
+  // Update import mutation
+  const updateImportMutation = useUpdateImportMutation(id, queryClient, () => setIsEditing(false));
+
+  // Load formData initially when importData is available
+  useEffect(() => {
+    if (importData && !formData) {
+      setFormData({
+        sendingLab: importData.sending_lab,
+        courier: importData.courier,
+        arrivalDate: importData.arrival_date,
+        labContactName: importData.lab_contact_name,
+        labContactEmail: importData.lab_contact_email,
+      });
     }
-  });
+  }, [importData, formData]);
 
   // Parse checklist from importData
   const parseChecklist = (): ImportChecklist => {
@@ -53,21 +55,170 @@ const ImportDetail = () => {
       return DEFAULT_CHECKLIST;
     }
   };
-
-  const checklist = parseChecklist();
   
   // Calculate progress percentage
   const calculateProgress = (): number => {
+    const checklist = parseChecklist();
     const totalItems = Object.keys(checklist).length;
     const completedItems = Object.values(checklist).filter(Boolean).length;
     return Math.round((completedItems / totalItems) * 100);
   };
 
-  // Update import mutation
-  const updateImportMutation = useMutation({
+  const handleGoBack = () => navigate('/imports');
+  const toggleEditMode = () => setIsEditing(!isEditing);
+  const handleCancel = () => setIsEditing(false);
+  const handleSave = (formData: any) => updateImportMutation.mutate(formData);
+
+  // Loading state
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  // Error state
+  if (error || !importData) {
+    return <ErrorState onGoBack={handleGoBack} />;
+  }
+
+  const progressValue = calculateProgress();
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      <ImportActionBar 
+        importNumber={importData.import_number}
+        isEditing={isEditing}
+        isPending={updateImportMutation.isPending}
+        onGoBack={handleGoBack}
+        onToggleEdit={toggleEditMode}
+        onCancel={handleCancel}
+        progressValue={progressValue}
+      />
+
+      <div className="grid gap-6 md:grid-cols-6">
+        <div className="md:col-span-4">
+          {isEditing ? (
+            <EditingView 
+              importData={importData} 
+              handleSave={handleSave} 
+              handleCancel={handleCancel}
+              isPending={updateImportMutation.isPending}
+            />
+          ) : (
+            <ImportShipmentView importData={importData} />
+          )}
+        </div>
+        
+        <div className="md:col-span-2">
+          <ImportChecklistCard 
+            importId={importData.import_number}
+            initialChecklist={parseChecklist()}
+            formData={formData}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Helper components to keep the main component clean
+const LoadingState = () => (
+  <div className="container mx-auto px-4 py-6">
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex justify-center items-center py-12">
+          <p className="text-muted-foreground">Loading import details...</p>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const ErrorState = ({ onGoBack }: { onGoBack: () => void }) => (
+  <div className="container mx-auto px-4 py-6">
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-col items-center py-12">
+          <p className="text-destructive mb-4">Error loading import details</p>
+          <button onClick={onGoBack} className="flex items-center gap-2 px-4 py-2 rounded-md border">
+            Back to Imports
+          </button>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+const EditingView = ({ 
+  importData, 
+  handleSave, 
+  handleCancel,
+  isPending
+}: { 
+  importData: ImportDatabaseItem, 
+  handleSave: (data: any) => void, 
+  handleCancel: () => void,
+  isPending: boolean
+}) => (
+  <Card>
+    <CardHeader className="pb-3">
+      <CardTitle>Edit Import Shipment</CardTitle>
+      <CardDescription>
+        Update the details for this import shipment
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <ImportShipmentForm 
+        onSubmit={handleSave} 
+        onCancel={handleCancel}
+        initialData={{
+          importNumber: importData.import_number,
+          sendingLab: importData.sending_lab,
+          protocolNumber: importData.protocol_number || '',
+          courier: importData.courier || '',
+          courierAccountNumber: importData.courier_account_number || '',
+          arrivalDate: importData.arrival_date ? new Date(importData.arrival_date) : undefined,
+          animalType: importData.animal_type,
+          quantity: importData.quantity,
+          status: importData.status || '',
+          notes: importData.notes || '',
+          labContactName: importData.lab_contact_name || '',
+          labContactEmail: importData.lab_contact_email || '',
+        }}
+        isEditing={true}
+        isSubmitting={isPending}
+        formId="import-edit-form"
+      />
+    </CardContent>
+  </Card>
+);
+
+// Custom hooks for data fetching and mutations
+const useImportQuery = (id: string | undefined) => {
+  return useQuery({
+    queryKey: ['import', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Import ID is required');
+      
+      const { data, error } = await supabase
+        .from('imports')
+        .select('*')
+        .eq('import_number', id)
+        .single();
+      
+      if (error) throw error;
+      
+      return data as ImportDatabaseItem;
+    }
+  });
+};
+
+const useUpdateImportMutation = (
+  id: string | undefined, 
+  queryClient: any, 
+  onSuccessCallback: () => void
+) => {
+  return useMutation({
     mutationFn: async (updatedImport: any) => {
-      // Store formData for checklist auto-updates
-      setFormData(updatedImport);
+      if (!id) throw new Error('Import ID is required');
       
       const { error } = await supabase
         .from('imports')
@@ -93,137 +244,13 @@ const ImportDetail = () => {
       queryClient.invalidateQueries({ queryKey: ['import', id] });
       queryClient.invalidateQueries({ queryKey: ['imports'] });
       toast.success('Import shipment updated successfully');
-      setIsEditing(false);
+      onSuccessCallback();
     },
     onError: (error) => {
       console.error('Error updating import:', error);
       toast.error('Failed to update import shipment');
     }
   });
-
-  // Load formData initially when importData is available
-  useEffect(() => {
-    if (importData && !formData) {
-      setFormData({
-        sendingLab: importData.sending_lab,
-        courier: importData.courier,
-        arrivalDate: importData.arrival_date,
-        labContactName: importData.lab_contact_name,
-        labContactEmail: importData.lab_contact_email,
-      });
-    }
-  }, [importData, formData]);
-
-  const handleGoBack = () => {
-    navigate('/imports');
-  };
-
-  const toggleEditMode = () => {
-    setIsEditing(!isEditing);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
-
-  const handleSave = (formData: any) => {
-    updateImportMutation.mutate(formData);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-center items-center py-12">
-              <p className="text-muted-foreground">Loading import details...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (error || !importData) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center py-12">
-              <p className="text-destructive mb-4">Error loading import details</p>
-              <Button onClick={handleGoBack} variant="outline" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Imports
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const progressValue = calculateProgress();
-
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <ImportActionBar 
-        importNumber={importData.import_number}
-        isEditing={isEditing}
-        isPending={updateImportMutation.isPending}
-        onGoBack={handleGoBack}
-        onToggleEdit={toggleEditMode}
-        onCancel={handleCancel}
-        progressValue={progressValue}
-      />
-
-      <div className="grid gap-6 md:grid-cols-6">
-        <div className="md:col-span-4">
-          {isEditing ? (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Edit Import Shipment</CardTitle>
-                <CardDescription>
-                  Update the details for this import shipment
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ImportShipmentForm 
-                  onSubmit={handleSave} 
-                  onCancel={handleCancel}
-                  initialData={{
-                    importNumber: importData.import_number,
-                    sendingLab: importData.sending_lab,
-                    protocolNumber: importData.protocol_number || '',
-                    courier: importData.courier || '',
-                    courierAccountNumber: importData.courier_account_number || '',
-                    arrivalDate: importData.arrival_date ? new Date(importData.arrival_date) : undefined,
-                    animalType: importData.animal_type,
-                    quantity: importData.quantity,
-                    status: importData.status || '',
-                    notes: importData.notes || '',
-                    labContactName: importData.lab_contact_name || '',
-                    labContactEmail: importData.lab_contact_email || '',
-                  }}
-                  isEditing={true}
-                  isSubmitting={updateImportMutation.isPending}
-                  formId="import-edit-form"
-                />
-              </CardContent>
-            </Card>
-          ) : (
-            <ImportShipmentView importData={importData} />
-          )}
-        </div>
-        
-        <div className="md:col-span-2">
-          <ImportChecklistCard 
-            importId={importData.import_number}
-            initialChecklist={parseChecklist()}
-            formData={formData}
-          />
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default ImportDetail;

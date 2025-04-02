@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Form } from "@/components/ui/form";
 import { ImportShipment } from '@/types';
+import { Separator } from "@/components/ui/separator";
 
 import DocumentUpload from './form-utils/DocumentUpload';
 import ShipmentFormFooter from './form-utils/ShipmentFormFooter';
@@ -56,6 +57,20 @@ const ImportShipmentForm = ({
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
 
+  // Watch for form changes to update parent component
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      if (onSubmit && typeof onSubmit === 'function') {
+        // This is a hack to get form values for the checklist preview
+        const currentValues = form.getValues();
+        if (currentValues.sendingLab) {
+          onSubmit(currentValues);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form, onSubmit]);
+
   const handleFormSubmit = (values: ImportFormValues) => {
     let finalCourier = values.courier;
     if (values.courier === "Other" && values.courierOther) {
@@ -79,29 +94,44 @@ const ImportShipmentForm = ({
   return (
     <FormProvider {...form}>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6" id={formId}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ImportDetailsFields />
-            
-            <div className="space-y-6">
-              <CourierFields />
-              
-              <LabContactFields />
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8" id={formId}>
+          <div>
+            <h3 className="text-lg font-medium mb-4">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <ImportDetailsFields />
             </div>
-            
-            <div className="space-y-6">
+          </div>
+          
+          <Separator />
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">Shipping Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CourierFields />
               <StatusFields />
+            </div>
+          </div>
+          
+          <Separator />
+          
+          <div>
+            <h3 className="text-lg font-medium mb-4">Lab Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <LabContactFields />
             </div>
           </div>
 
           <NotesField />
 
           {!isEditing && (
-            <DocumentUpload 
-              documentFiles={documentFiles} 
-              setDocumentFiles={setDocumentFiles} 
-              description="Upload health certificates, customs documents, etc."
-            />
+            <>
+              <Separator />
+              <DocumentUpload 
+                documentFiles={documentFiles} 
+                setDocumentFiles={setDocumentFiles} 
+                description="Upload health certificates, customs documents, etc."
+              />
+            </>
           )}
 
           {!formId.includes("edit") && (
