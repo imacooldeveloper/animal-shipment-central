@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import DashboardCards from "@/components/dashboard/DashboardCards";
 
 const Index = () => {
-  // Sample counts for the dashboard cards
+  // Sample counts for the dashboard cards, now including imports and exports
   const counts = {
     total: 15,
     draft: 3,
     progress: 8,
-    complete: 4
+    complete: 4,
+    imports: 5,
+    exports: 10
   };
 
   return (

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -18,18 +18,37 @@ interface ExportShipmentFormProps {
   onSubmit: (data: any) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
+  initialData?: any;
+  isEditing?: boolean;
+  formId?: string;
 }
 
-const ExportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: ExportShipmentFormProps) => {
+const ExportShipmentForm = ({ 
+  onSubmit, 
+  onCancel, 
+  isSubmitting = false,
+  initialData,
+  isEditing = false,
+  formId
+}: ExportShipmentFormProps) => {
+  const defaultValues = initialData || {
+    exportNumber: `EXP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+    sendingLab: "Our Facility",
+    trackingNumber: "",
+    notes: "",
+  };
+  
   const form = useForm<ExportFormValues>({
     resolver: zodResolver(exportFormSchema),
-    defaultValues: {
-      exportNumber: `EXP-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
-      sendingLab: "Our Facility",
-      trackingNumber: "",
-      notes: "",
-    },
+    defaultValues,
   });
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
 
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
 
@@ -55,7 +74,7 @@ const ExportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: Export
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form id={formId} onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <ExportDetailsFields />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -84,7 +103,7 @@ const ExportShipmentForm = ({ onSubmit, onCancel, isSubmitting = false }: Export
 
         <ShipmentFormFooter 
           onCancel={onCancel} 
-          buttonLabel="Create Export" 
+          buttonLabel={isEditing ? "Update Export" : "Create Export"} 
           buttonColor="bg-blue-600 hover:bg-blue-700"
           isSubmitting={isSubmitting}
         />

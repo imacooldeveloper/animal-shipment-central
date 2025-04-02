@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define the Note type explicitly to avoid recursive type issues
 interface Note {
   id: string;
   content: string;
@@ -23,7 +24,7 @@ interface ShipmentNotesProps {
 
 const ShipmentNotes = ({ shipmentId, shipmentType, existingNotes = [] }: ShipmentNotesProps) => {
   // Parse notes if they are a string, otherwise use them as is
-  const parsedInitialNotes = typeof existingNotes === 'string' ? 
+  const parsedInitialNotes: Note[] = typeof existingNotes === 'string' ? 
     (tryParseJSON(existingNotes) || []) : 
     existingNotes;
   
